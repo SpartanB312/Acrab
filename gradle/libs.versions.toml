@@ -1,0 +1,28 @@
+[versions]
+kotlin = "2.4.0"
+serialization = "1.11.0"
+asm = "9.10.1"
+cfr = "0.152"
+coroutines = "1.11.0"
+ktor = "3.5.0"
+vineflower = "1.12.0"
+
+[libraries]
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
+asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
+cfr = { module = "org.benf:cfr", version.ref = "cfr" }
+vineflower = { module = "org.vineflower:vineflower", version.ref = "vineflower" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+
+[bundles]
+asm = ["asm", "asm-analysis", "asm-commons", "asm-tree", "asm-util"]
+
+
+

@@ -1,0 +1,72 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Kotlin
+.kotlin/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.run/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# AI and agent scratch content (never publish)
+.ai/
+.codex/
+.claude/
+.cursor/
+.continue/
+.aider*
+ai-drafts/
+ai_drafts/
+ai-scratch/
+ai_scratch/
+agent-output/
+agent_output/
+*.draft
+*.draft.*
+
+# Local design and private documentation (never publish)
+design/
+docs/design/
+*.local.md
+*.local.txt
+
+# Temporary workspaces
+tmp/
+temp/
+scratch/
+out/
+dist/
+*.log
+*.hprof
+heapdump/
+
+# Local runtime data
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-journal
+
+# Local verification fixtures and scratch (never publish)
+test-fixtures/
+tool-verification/
+docs/method-patch-repair-plan.md
+docs/RELIABILITY-REPAIR-PLAN.md
+antares-lite-improvements.md
+/scripts

@@ -1,0 +1,143 @@
+# Shared Specialist Contract
+
+This is an agent handoff contract, not an MCP request schema. Pair it with the
+selected specialist skill and workflow. Read their files when accessible;
+otherwise the coordinator supplies the text. Do not demand inline copies when
+resources can be read. Obtain inaccessible instructions before domain work
+rather than inventing a substitute workflow.
+
+## Task input
+
+Supply the user goal, deliverable, exact scope, source identity, existing
+evidence, authorization and a stop condition. Method scope includes class,
+method and JVM descriptor. Discovery scope includes queries/categories and a
+result budget. Unknown inputs may be null; Sirius establishes identity and
+`class_summary` can resolve an ambiguous descriptor before deep analysis.
+
+```json
+{
+  "goal": "Explain the branch at the selected source instruction",
+  "deliverable": "Static evidence with unresolved assumptions",
+  "projectId": null,
+  "inputSha256": null,
+  "scope": {
+    "className": "example.Guard",
+    "methodName": "check",
+    "methodDescriptor": "(I)Z",
+    "instructionIndexes": []
+  },
+  "authorization": { "applyPatch": false },
+  "evidence": [],
+  "stopCondition": "Answer this branch question or identify the missing evidence"
+}
+```
+
+Use the existing MCP connection. The coordinator owns transport setup. The
+server supports newline-delimited stdio and JSON responses to HTTP
+`POST /mcp`, session headers and no SSE.
+
+## Source identity and addressing
+
+- Preserve project and SHA-256 together. Project records call the hash
+  `sha256`; index/summary use `archiveSha256`; finder, decompiler and patch
+  use `inputSha256`. Normalize these into handoff `inputSha256` without
+  inventing a server field.
+- Establish an initial `archive_summary`; reuse it instead of importing and
+  indexing for every expert. Stored archives and index caches are not live
+  views of externally edited files. Import changed bytes as a new project.
+- Copy class names/descriptors from `class_summary`. Bytecode responses use
+  `descriptor`; decompile/patch use `methodDescriptor`. Requests consistently
+  use `methodDescriptor`.
+- Name-only lookup is allowed only when unambiguous. Before method-specific
+  claims or patch anchors, repeat with the exact descriptor. Bytecode tools
+  then report `methodMatchKind: DESCRIPTOR` and `exactMethodMatch: true`.
+  Decompiler flags confirm parsed declaration signatures, not body equivalence;
+  follow Vega's workflow for extraction failures and backend diagnostics.
+- Indexes are raw ASM instruction-list positions. Visible bytecode omits
+  label/line/frame nodes, so indexes have gaps. Use returned `index`,
+  `labelIndexes` and targets; never renumber a listing.
+
+## Evidence and coverage
+
+| Level | Meaning | Qualification |
+| --- | --- | --- |
+| `fact` | Observed archive, index, instruction or backend property | Tool/response location; limit the claim to the observation |
+| `candidate` | Detector signal or positional/static hypothesis | Confidence, assumptions and confirmation needed |
+| `reconstruction` | Decompiled source or syntax extraction | Backend/version, warnings, failed regions and match caveats |
+| `unknown` | Evidence cannot resolve the claim | Missing evidence or unsupported capability |
+
+Preserve provenance: tool, arguments/scope, response pointer, exact method,
+instruction/finding IDs and warnings. Inspect `isError`, domain status,
+identity and truncation before using a result. A fact about a tool response is
+not automatically a fact about runtime behavior.
+
+Separate scan coverage, returned payload and investigation coverage. Record
+caps, returned count, total/remaining count, cursor and truncation when exposed;
+use null otherwise. `scanComplete: true` does not make a truncated page
+complete. Only reviewed findings support investigation conclusions. Absence
+of signals is not absence of obfuscation.
+
+## Authorization and effects
+
+Import stores a copy/record; indexing caches data; decompilation can create
+temporary files. Draft validates without preparing output. Preview prepares
+bytes and may update durable idempotency bookkeeping, but publishes no patched
+archive. Apply writes a new artifact/project and leaves the source unchanged.
+
+Respect the requested stage. Preview-only work can finish without apply.
+Apply requires authorization for the concrete change; preserve authorization
+already given and do not ask again solely because a workflow has a review
+gate. When authorization is absent, finish a reviewable preview before asking
+for the final decision. Analysis and finder recommendations do not authorize
+patching.
+
+Never execute target code or manually change workspace archives, indexes,
+tokens or journals. `asm-static` does not prove runtime linking, intended
+behavior or semantic equivalence.
+
+## Result handoff
+
+Use structured JSON for delegated work; direct answers may use prose with the
+same relevant information. This example is a shape, not a server response:
+
+```json
+{
+  "expert": "antares-lite-bytecode-analyst",
+  "status": "partial",
+  "completedStage": "bytecode-inspection",
+  "projectId": null,
+  "inputSha256": null,
+  "scope": { "className": "example.Guard", "methodName": "check", "methodDescriptor": "(I)Z" },
+  "toolsUsed": ["method_bytecode"],
+  "evidence": [],
+  "claims": [],
+  "coverage": { "requested": "one branch", "reviewed": [], "truncated": null },
+  "artifacts": [],
+  "limitations": ["Example only; no archive has been inspected"],
+  "nextAction": { "expert": "antares-lite-jvm-indexer", "reason": "Establish source identity" }
+}
+```
+
+Each real claim has `level`, `claim` and `evidenceIds` pointing to evidence
+records. Evidence records identify tool, arguments, source identity and response
+location. Candidate records retain ID, category, subpattern, confidence, weight,
+limitations and next tools. Reconstruction retains backend/version and extraction
+metadata. Artifacts identify source/output projects, path, checksum and checks.
+
+`complete` means the requested deliverable and checks are satisfied; a bounded
+answer may contain explicit unknowns. `partial` means useful evidence exists
+but requested coverage or a required check is missing. `blocked` means no next
+useful step is possible with available input, tools and authorization. Explain
+the missing condition. A skipped step never counts as a passed check.
+
+## Recovery and stopping
+
+Correct schema errors from `tools/list`, then retry the corrected call. On
+descriptor ambiguity, retrieve descriptors rather than trying random values.
+On checksum disagreement, stop combining results and re-establish identity.
+Capability questions can finish without a JAR.
+
+Bound read-only retries by a concrete alternative, such as a narrower query or
+the other supported backend. Do not repeat unchanged failing calls. Handle
+patch expiry, consumption and uncertain application through Altair's recovery
+flow; application is not a blind retry operation.

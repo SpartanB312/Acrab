@@ -20,7 +20,7 @@ Linux/macOS stdio:
 
 Configure a local MCP client to launch this executable with no arguments
 (or `stdio`). The process reads one JSON-RPC object per line from stdin and
-returns one JSON response per line on stdout.
+returns one JSON response per request on stdout. Notifications have no response.
 
 For a server kept running separately, pass `http`:
 
@@ -44,17 +44,22 @@ The following JSON-RPC messages work over either transport:
 ```
 
 ```json
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+```
+
+```json
 {"jsonrpc":"2.0","id":2,"method":"tools/list"}
 ```
 
 Over HTTP, send JSON with `Content-Type: application/json` by `POST /mcp`.
-Keep the returned `Mcp-Session-Id` on later requests. With no header the server
-uses the shared `stateless` session; a client can provide its own distinct
-session ID from initialization. `DELETE /mcp` with the header closes that
-session. Responses are JSON; no SSE connection is needed.
+Keep the returned `Mcp-Session-Id` on later requests. Initialization without a
+header creates a unique session; a client can also supply a distinct ID during
+initialization. Later requests without a valid session fail. Notifications
+return HTTP 202 with no body. `DELETE /mcp` closes that session; a closed session
+must be initialized again. Responses are JSON; no SSE connection is needed.
 
-`tools/list` is the MCP method listing all 28 endpoints. The similarly named
-`list_tools` is a callable platform tool that lists 26 domain definitions.
+`tools/list` is the MCP method listing all 34 endpoints. The similarly named
+`list_tools` is a callable platform tool that lists 32 domain definitions.
 Use `health` for version and endpoint counts.
 
 ## Import and identify an archive
@@ -81,10 +86,37 @@ but does not validate every class. Continue with:
 {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"archive_summary","arguments":{"projectId":"<projectId>"}}}
 ```
 
-Compare returned `archiveSha256` with the imported record. For existing input,
-use `list_projects` and verify the ID/checksum before reusing its summary.
+Compare returned `archiveSha256` with the imported record. Use
+`verify_archive_identity` with `projectId` and optional `expectedSha256` to
+recompute current stored bytes. Require `matches` and, if supplied,
+`expectedMatches`. For existing input, verify current identity before reuse.
 Names alone are insufficient. Do not edit files in the server workspace;
 import changed bytes as a new project.
+
+## Use the file-based HTTP client
+
+Python 3.11 or newer is needed only for the bundled helper scripts. From the
+distribution root, with the HTTP server running:
+
+```sh
+python scripts/antares_client.py --list --output tools.json
+python scripts/antares_client.py --archive example.jar --evidence-dir evidence --output imported.json
+python scripts/antares_client.py --tool method_bytecode --arguments-file method.json --output method-response.json
+```
+
+`method.json` contains one UTF-8 JSON **arguments object**, for example:
+
+```json
+{"projectId":"<projectId>","className":"example.Guard","methodName":"check","methodDescriptor":"(I)Z"}
+```
+
+The client initializes, sends the notification, retains/closes its session and
+writes the complete response. Imports compare local bytes, returned hash and
+fresh server identity. Use `--expected-sha256` to enforce a known input and
+`--endpoint` for another server. Each `--evidence-dir` run creates a distinct
+export directory. Verify that directory with `--verify-evidence`; the checks
+detect altered records, not semantic correctness or author authenticity.
+See [analysis and verification](ANALYSIS-AND-VERIFICATION.md).
 
 ## Locate an exact method
 

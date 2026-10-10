@@ -35,6 +35,10 @@ result budget. Unknown inputs may be null; Sirius establishes identity and
 Use the existing MCP connection. The coordinator owns transport setup. The
 server supports newline-delimited stdio and JSON responses to HTTP
 `POST /mcp`, session headers and no SSE.
+Send `notifications/initialized` after initialization. HTTP assigns a unique
+session when none is supplied; retain its header on every later request.
+Notifications return 202 with no body. Unknown/closed sessions require a new
+initialization, not reuse of a shared stateless session.
 
 ## Source identity and addressing
 
@@ -45,6 +49,11 @@ server supports newline-delimited stdio and JSON responses to HTTP
 - Establish an initial `archive_summary`; reuse it instead of importing and
   indexing for every expert. Stored archives and index caches are not live
   views of externally edited files. Import changed bytes as a new project.
+- Use `verify_archive_identity` to recompute current stored bytes, comparing
+  `recordedSha256`, `actualSha256`, `matches` and optional `expectedMatches`.
+  Index reuse verifies current bytes and rejects mismatch. Compare raw response
+  fields before claiming identity conflict; an earlier report or filename is
+  insufficient. Save `inputSha256` and `analysisVersion` on method evidence.
 - Copy class names/descriptors from `class_summary`. Bytecode responses use
   `descriptor`; decompile/patch use `methodDescriptor`. Requests consistently
   use `methodDescriptor`.
@@ -62,7 +71,7 @@ server supports newline-delimited stdio and JSON responses to HTTP
 | Level | Meaning | Qualification |
 | --- | --- | --- |
 | `fact` | Observed archive, index, instruction or backend property | Tool/response location; limit the claim to the observation |
-| `candidate` | Detector signal or positional/static hypothesis | Confidence, assumptions and confirmation needed |
+| `candidate` | Detector signal or unconfirmed static hypothesis | Confidence, assumptions and confirmation needed |
 | `reconstruction` | Decompiled source or syntax extraction | Backend/version, warnings, failed regions and match caveats |
 | `unknown` | Evidence cannot resolve the claim | Missing evidence or unsupported capability |
 
@@ -70,6 +79,18 @@ Preserve provenance: tool, arguments/scope, response pointer, exact method,
 instruction/finding IDs and warnings. Inspect `isError`, domain status,
 identity and truncation before using a result. A fact about a tool response is
 not automatically a fact about runtime behavior.
+
+Numeric argument and field bindings are explicit assumptions. Preserve their
+maps, originating callsite/write and conditional scope. One observed direct
+callsite does not establish all callers, dynamic dispatch or a global field
+invariant. Producer sets describe actual modeled operands, retaining merge
+alternatives, widths, truncation and unknown values.
+
+Preserve complete response bytes using the file client's evidence export when
+available. Verify request/response IDs, checksums and source metadata before
+reuse. Export checks detect integrity errors, not authenticity or semantic
+correctness. Compilation, structural comparison, finder coverage and bounded
+external behavior checks have separate results; none substitutes for another.
 
 Separate scan coverage, returned payload and investigation coverage. Record
 caps, returned count, total/remaining count, cursor and truncation when exposed;

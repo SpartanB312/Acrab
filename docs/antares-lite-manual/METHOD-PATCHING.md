@@ -101,6 +101,8 @@ Invoke-LiteRpc 'initialize' @{
     capabilities = @{}
     clientInfo = @{ name = 'patch-fixture'; version = '1.0' }
 } | Out-Null
+$notification = @{ jsonrpc = '2.0'; method = 'notifications/initialized' } | ConvertTo-Json -Compress
+Invoke-WebRequest -Uri $liteEndpoint -Method Post -Headers $liteHeaders -ContentType 'application/json' -Body $notification | Out-Null
 Invoke-LiteRpc 'tools/list' @{} | Out-Null
 ```
 

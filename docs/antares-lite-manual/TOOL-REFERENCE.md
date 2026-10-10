@@ -1,7 +1,7 @@
 # Tool Reference
 
-This reference describes the bundled 1.2.1 server. Use runtime `tools/list` or
-generated `catalog/tools-catalog.json` for full schemas. There are 26 domain
+This reference describes the bundled 1.3.0 server. Use runtime `tools/list` or
+generated `catalog/tools-catalog.json` for full schemas. There are 32 domain
 tools plus `health` and `list_tools`; registry "analysis tools" include import
 and patching.
 
@@ -22,6 +22,7 @@ establish tool or patch success.
 | --- | --- | --- | --- |
 | `create_project` | `fileName`, `archiveBase64` | None | ID, filename, path, `sha256`, creation time; decoded input up to 128 MiB |
 | `list_projects` | None | None | Stored project records, newest first; no query/cursor |
+| `verify_archive_identity` | `projectId` | `expectedSha256` | Recomputed `actualSha256`, `recordedSha256`, `matches` and optional `expectedMatches` |
 | `index_archive` | `projectId` | None | ID, `archiveSha256`, class/method/field/string/invocation counts |
 | `archive_summary` | `projectId` | None | Archive hash, structural counts, manifest main class, top packages |
 | `list_classes` | `projectId` | `query`, `limit` | Class array; default 100, cap 1,000 |
@@ -30,8 +31,10 @@ establish tool or patch success.
 | `class_summary` | `projectId`, `className` | None | Fields/methods/descriptors, inheritance, flags, annotations |
 
 Import stores a copy; it does not validate every class. Index/summary/queries
-build or reuse an in-memory index. Records persist, but indexes are not live
-views of files changed outside the server. Import changed bytes as a new project.
+build or reuse an in-memory index. Index reuse recomputes stored archive identity
+and rejects changed bytes rather than trusting a cached hash. Records persist;
+import changed bytes as a new project. An identity tool response can succeed
+while `matches` is false; inspect its fields before continuing.
 
 Class/string queries use trimmed, case-insensitive substring matching.
 Limits clamp to 1-1,000; supply a positive limit. Results have no cursor, total
@@ -53,12 +56,13 @@ An overloaded name-only call fails with available descriptors.
 | --- | --- | --- | --- |
 | `method_bytecode` | None | None | Instructions, label indexes, count, access/synthetic flags; at most 500 executable instructions |
 | `method_cfg` | None | None | Entry, blocks, edges, unreachable blocks; at most 100 blocks |
-| `method_stack_slice` | `instructionIndex` | `argumentSlots` | Positional operand candidates; default one requested slot |
-| `cfg_constant_propagation` | None | None | Block/branch facts; at most 100 blocks |
+| `method_stack_slice` | `instructionIndex` | `argumentSlots` | Actual consumed operands; inferred count by default, optional 0-256 JVM stack slots |
+| `cfg_constant_propagation` | None | `argumentValues`, `fieldValues` | Conditional block/branch facts; at most 100 blocks |
 
 Responses use `descriptor` for the resolved JVM descriptor, plus
 `requestedDescriptor`, `methodMatchKind` (`DESCRIPTOR` or `NAME_ONLY`)
 and `exactMethodMatch`. For these tools the flag means descriptor-selected.
+They include `inputSha256` and `analysisVersion` for evidence reuse.
 
 Instruction `index`, `jumpTargetIndex`, switch/label targets are raw ASM
 positions. The listing omits metadata nodes without renumbering; counts include
@@ -68,17 +72,74 @@ Current interpretation limits:
 
 - Truncated CFG `unreachableBlocks` includes omitted blocks as well as
   modeled unreachable blocks; edges may reference unreturned blocks.
-- Stack slices expose unknown values and positional producer candidates, not
-  def-use provenance, operand order or derived wide-value slot widths.
+- Stack slices trace consumed values bottom-to-top using ASM dataflow. They
+  expose `slotWidth`, immediate `producerInstructionIndexes`, transitive
+  `originInstructionIndexes`, parameter-local indexes and numeric values when
+  known. `producerInstructionIndex` is populated only when unique; merged
+  alternatives stay sets. Explicit `argumentSlots` selects the top stack slots
+  and rejects requests splitting a wide operand. Check `analysisStatus`,
+  warnings, `truncated` and per-slice `provenanceTruncated`. Origins/producers
+  cap at 128 per value; analysis has instruction/frame budgets.
 - Numeric constant propagation reports normal-flow stack/local values at block
   exits, up to 500 `instructionFacts`, and branch outcomes `taken`, `not-taken`
   or `unknown`. Unconditional `GOTO` is `taken`. Numeric arithmetic, conversions,
-  JVM overflow and shifts are modeled; field/call results and conflicting merges
-  remain unknown. It does not prove that potentially throwing operations complete.
+  JVM overflow and shifts are modeled. Fields remain unknown unless explicitly
+  bound; call results and conflicting merges remain unknown. Branch facts include
+  operands, condition expressions, taken/fallthrough destinations and an unknown
+  reason. It does not prove that potentially throwing operations complete.
   Analysis is bounded to 10,000 instructions and two million frame cells;
   skipped/failed analysis is warned. Block stack/local payloads cap at 500 each.
 
 These are bounded static observations, not full dataflow/runtime proofs.
+
+`argumentValues` and `fieldValues` are objects with **string values**. Argument
+keys are zero-based formal argument ordinals excluding `this`, not local slots.
+Field keys are internal `owner/name.field:descriptor` identifiers for primitive
+static fields. Boolean values are `"0"` or `"1"`; floating assumptions must be
+finite. Supplied maps are echoed with scope `conditional-on-supplied-assumptions`.
+Without bindings, scope is `intraprocedural-normal-flow`. Field bindings are
+fixed read assumptions, not automatic write/caller analysis or a global proof.
+
+## References, context and recovery
+
+| Tool | Required arguments | Optional arguments | Result and limits |
+| --- | --- | --- | --- |
+| `method_references` | `projectId`, `className`, `methodName` | `methodDescriptor`, `direction`, `offset`, `limit` | Indexed direct `calls`; direction `callers` (default) or `callees` |
+| `field_references` | `projectId`, `className`, `fieldName` | `fieldDescriptor`, `access`, `offset`, `limit` | Indexed `fields`; access `all` (default), `reads` or `writes` |
+| `method_call_context` | `projectId`, `className`, `methodName`, `instructionIndex` | `methodDescriptor`, `argumentValues`, `fieldValues` | Receiver and actual arguments for one direct invocation, `calleeArgumentValues` |
+| `recover_strings` | `projectId`, `className` | None | Bounded static `<clinit>()V` string recovery and ordered key evidence |
+| `compare_structure` | `sourceProjectId`, `outputProjectId` | `classNames`, `memberNames`, `limit` | Source/output hashes, mapped structural differences and total count |
+
+Reference pages expose `totalCount`, `offset`, `nextOffset`, `truncated` and
+`scanComplete`. Default limit is 100, accepted range 1-1,000. Keep selectors
+fixed while following `nextOffset`. Sites retain source descriptors, instruction
+indexes and target descriptors. They do not resolve virtual dispatch, reflection,
+bootstrap behavior or external callers. Field selection must resolve uniquely.
+
+Call context accepts a raw ASM index identifying a direct `INVOKE*` instruction,
+not invokedynamic. Its numeric `calleeArgumentValues` can seed a selected callee,
+but describe one observed normal-flow site under recorded assumptions. Receiver
+and unknown arguments stay unknown; omitted map entries are not zeros.
+
+String recovery models a restricted cyclic-XOR char-array initializer as data;
+it never loads target classes or invokes their methods. Inspect `status`:
+`recovered` includes literal strings with field/array position, `cyclicKeys` in
+order, source indexes and steps; `unsupported` includes diagnostics and no
+speculative plaintext. Budgets include 10,000 instructions, 100,000 steps,
+bounded arrays, four million allocated characters and one million returned
+characters. Duplicate key values keep their original positions.
+
+Structure maps have string values. `classNames` uses dotted source to output
+names; `memberNames` uses exact `Class#method(descriptor)` or
+`Class#field:descriptor` keys and new names. Descriptor references are remapped.
+Collisions and constructor/initializer renaming are rejected. Checks cover
+class access, superclass/interfaces, member access/descriptors and manifest
+Main-Class. The returned `differenceCount` is independent of the bounded
+`differences` list (default 100, cap 1,000). This tool does not compare method
+bodies, resources, annotations or behavioral equivalence.
+
+See [context and independent verification](ANALYSIS-AND-VERIFICATION.md) for
+worked input conventions and separate artifact checks.
 
 ## Reconstruction
 
@@ -178,5 +239,5 @@ that postcheck separately before inspecting its requested change.
 | `health` | None | Plain-text readiness/version and endpoint counts |
 | `list_tools` | None | JSON domain definitions with schemas/envelopes |
 
-MCP `ping`, `initialize`, `tools/list` and `tools/call` are protocol methods,
+MCP `ping`, `initialize`, `notifications/initialized`, `tools/list` and `tools/call` are protocol methods,
 not additional callable analysis tools.

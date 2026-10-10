@@ -71,6 +71,11 @@ scope. Record `reindexed`; the current implementation returns false and does
 not automatically index its output. Call `index_archive` when needed and verify
 its output checksum. Obtain output `archive_summary`; its hash must equal
 `artifactChecksum`. Inspect the requested method/change on the output project.
+Run `verify_archive_identity` with `artifactChecksum` and compare structural
+differences when relevant. A contextual branch-removal rationale must retain
+its caller/field assumptions; neither verifier success nor finder-zero proves
+behavioral equivalence. External semantic checks, when authorized separately,
+must report their tested scope and stay outside this static workflow.
 Changed indexes now belong to a new source. A failure of postchecks means
 partial completion even when an artifact was published.
 

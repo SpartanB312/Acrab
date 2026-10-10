@@ -39,6 +39,13 @@ d4802826f15cb6dc2d1d73f01b7676779a7f3bde239e723680d8ffebe2cfa4ac
 These files allow the case study to be inspected against the exact target described below rather than against an
 unspecified sample.
 
+The experiment below records Antares Lite 1.2.1 behavior. The 1.3.0 follow-up
+repairs operand/context evidence and refreshes the source ZIP with build scripts,
+a bounded external probe and verification notes. The original target is unchanged.
+See the [current verification guide](docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md)
+and [source verification record](case/snake-deobf-src/reports/VERIFICATION.md)
+for the reproducible checks added after this experiment.
+
 ---
 
 ## Experiment setup

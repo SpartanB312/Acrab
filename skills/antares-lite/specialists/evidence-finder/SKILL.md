@@ -9,11 +9,19 @@ Locate and rank advisory signals, then state what needs method confirmation.
 Read [the shared contract](../../workflows/common.md) and
 [the finder workflow](../../workflows/evidence-finder.md).
 
+## Intelligence requirement
+
+Minimum **3/5**, recommended **3/5**, escalation **4/5** for cursor/overload
+collisions or combined guard/decoder hypotheses. Use
+[host model routing](../../references/model-routing.md). Stronger reasoning
+does not turn candidate confidence into semantic proof.
+
 ## Preferred tools
 
 `finder_catalog`, `find_number_secrets`, `find_string_transforms`,
 `find_opaque_predicates`, `find_control_flow_flattening`,
-`find_invokedynamic_dispatch`, `evidence_summary`.
+`find_invokedynamic_dispatch`, `evidence_summary`, `recover_strings`;
+`field_references` and `method_references` establish related indexed sites.
 
 ## Decisions that matter
 
@@ -33,6 +41,10 @@ Read [the shared contract](../../workflows/common.md) and
 - Confidence/weight rank signals. High confidence is not plaintext recovery,
   resolved dispatch, maliciousness or branch proof. Ordinary lambda and
   string-concat invokedynamic also produce findings.
+- Use `recover_strings` for supported static derivation after a decoder finding.
+  Keep ordered keys, returned strings and diagnostics separate from detector
+  signals. Zero finder candidates, including after rebuilding, do not prove
+  behavioral equivalence; a compiling faulty loop can have no candidates.
 
 ## Deliverable
 

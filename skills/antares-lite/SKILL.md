@@ -1,17 +1,28 @@
 ---
 name: antares-lite
-description: Analyze JVM JARs through Antares Lite MCP, coordinate indexing, bytecode evidence, obfuscation triage and CFR/Vineflower reconstruction, or prepare and apply a guarded method patch.
+description: Coordinate JVM JAR analysis and guarded method patching through Antares Lite MCP. Establish source identity, select bounded expert workflows and host-supported models, reconcile evidence, and verify reconstructed or patched artifacts.
 ---
 
 # Antares Lite
 
-Use this skill for JVM archive analysis and schema v2 method patching. The five
-specialists are roles over the same MCP registry; templates do not register
-tools or establish a connection. Android/DEX analysis is unsupported.
+This is the main-agent entrypoint for JVM archive analysis and schema v2
+method patching. The five specialists are roles over the same MCP registry;
+templates do not register tools or establish a connection. Android/DEX
+analysis is unsupported. A role can be performed locally; this skill does not
+authorize spawning agents.
 
-Read [the shared workflow](workflows/common.md) for identity, evidence,
-authorization and handoff rules. Load only the specialist skill and workflow
-needed for the current question.
+Read [the coordinator workflow](workflows/coordinator.md) for task decisions
+and [the shared contract](workflows/common.md) for identity and evidence.
+Load only the specialist resources needed for the question. For model
+selection, read [model routing](references/model-routing.md) and its
+[machine-readable ratings](references/model-routing.json).
+
+## Intelligence requirement
+
+Minimum **4/5**, recommended **4/5**, escalation **5/5** for conflicting
+cross-method evidence, irreversible publication or complex reconstruction.
+These are reasoning requirements, not model benchmarks or confidence scores.
+Use the host's supported inventory and preserve explicit user choices.
 
 ## Establish the task
 
@@ -21,11 +32,12 @@ needed for the current question.
    Analysis or preview does not authorize application.
 2. Use the connected server. When opening a connection, initialize and discover
    `tools/list`; inspect the schema rather than guessing parameters.
-   `health` answers status questions; `list_tools` lists 26 domain tools,
+   Send `notifications/initialized` and retain the HTTP session header.
+   `health` answers status questions; `list_tools` lists 32 domain tools,
    whereas `tools/list` includes both platform endpoints as well.
-3. Reuse a supplied project after checking identity. For a new archive, import
+3. Reuse a supplied project after `verify_archive_identity`. For a new archive, import
    and index through Sirius. Establish `projectId`, archive SHA-256 and
-   `archive_summary` once before project-dependent analysis. Capability-only
+   a fresh identity check and `archive_summary` before project-dependent analysis. Capability-only
    questions need no project.
 4. Choose a bounded next action that can resolve the question. Reuse evidence
    only for the same archive, exact scope and relevant tool/backend version.
@@ -45,6 +57,8 @@ available and authorized. Supply the selected skill, its workflow and shared
 contract as readable resources or inline text. A path is sufficient only when
 the receiving agent can read it. If delegation is unavailable, perform the
 same workflow directly; do not block an otherwise answerable request.
+An explicit single-agent request stays local. Choose a model only after
+delegation is authorized, and only from models actually supported by the host.
 
 After Sirius establishes identity, independent Mira and Vega questions may run
 in parallel. Rigel validates specific candidate or reconstruction claims.
@@ -71,6 +85,12 @@ Carry source identity, exact descriptors, source instruction indexes, backend
 metadata and coverage into the answer. Distinguish facts, heuristic candidates,
 reconstruction and unknowns. Finder confidence is not a probability; a valid
 preview is not proof of runtime correctness.
+
+Record caller/field assumptions separately from conclusions. Use real operand
+producer sets for branches; adjacency is not provenance. Compare rebuilt
+structure with explicit naming maps. Compilation and zero finder residue are
+separate checks from behavior. External fixture probes require task-specific
+authorization and stay outside these static MCP workflows.
 
 Resolve disagreement by checking the same source and descriptor first, then
 bytecode at disputed indexes. Report what met the requested goal, what remains

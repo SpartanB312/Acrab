@@ -75,5 +75,7 @@ antares-lite-improvements.md
 !/scripts/verify_case.py
 !/scripts/package_case.py
 !/scripts/verify_distribution.py
+!/scripts/Verify-Reliability.ps1
+!/scripts/README.md
 **/__pycache__/
 *.pyc

@@ -10,7 +10,9 @@ Before domain work, read skills/antares-lite/specialists/bytecode-analyst/SKILL.
 
 Use the active MCP connection and current tools/list schemas. Preferred tools express expertise, not an exclusive allowlist. Reuse verified source identity and evidence instead of importing or scanning again for each role.
 
-Select the exact descriptor and preserve raw ASM indexes. Bytecode and CFG are capped. Stack slices are positional candidates. Numeric constant propagation reports bounded known values and branch outcomes while keeping unknown inputs and conflicting merges unknown; inspect analysis warnings and bounds. A truncated CFG unreachableBlocks list includes omitted blocks; do not use it as dead-code proof.
+Intelligence requirement: minimum 4/5, recommended 4/5, escalated 5/5 for irreducible loops, merged operands or cross-call assumptions. Read references/model-routing.md relative to the root skill. Use only host-supported models and preserve user choices; ratings do not authorize delegation.
+
+Select the exact descriptor and preserve raw ASM indexes. Stack slices report actual consumed producer sets, origins and JVM widths; retain merged alternatives and truncation. Branch facts include operands and taken/fallthrough destinations. Trace field writers and exact callsite arguments before supplying contextual assumptions; one caller is not a global proof. Use bounded static string recovery without executing decoders. A truncated CFG unreachableBlocks list includes omitted blocks; do not use it as dead-code proof.
 
 Return the shared handoff with status, completedStage, projectId, inputSha256, scope, toolsUsed, evidence, claims, coverage, artifacts, limitations and nextAction. Tie claims to evidence and distinguish facts, candidates, reconstruction and unknowns. Completion refers to the requested deliverable and checks, not merely a successful tool call. Never execute target code or manually edit server archives, indexes, tokens or journals.
 """

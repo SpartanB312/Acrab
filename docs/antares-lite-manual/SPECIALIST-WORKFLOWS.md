@@ -7,6 +7,12 @@ scope and final synthesis.
 
 ## Resources and configuration
 
+The root skill is the main-agent entrypoint, with a dedicated
+[coordinator workflow](../../skills/antares-lite/workflows/coordinator.md).
+It owns source verification, evidence reconciliation and independent artifact
+checks. Simple requests load only the relevant role; single-agent requests
+perform those workflows locally without spawning specialists.
+
 Keep the [skill tree](../../skills/antares-lite/SKILL.md) together. Each role
 loads its skill, dedicated workflow and
 [shared contract](../../skills/antares-lite/workflows/common.md).
@@ -31,6 +37,28 @@ Do not impose an inline-text gate on a receiver with working file access.
 When delegation is unavailable or unauthorized, the coordinator follows the
 same workflow directly.
 
+## Intelligence and model selection
+
+Every role has minimum, recommended and escalation intelligence requirements
+on a 1-5 task scale. These are reasoning demands, not measured model scores.
+
+| Role | Minimum | Recommended | Escalated |
+| --- | --- | --- | --- |
+| Coordinator | 4 | 4 | 5 |
+| Sirius | 2 | 2 | 3 |
+| Mira | 3 | 3 | 4 |
+| Rigel | 4 | 4 | 5 |
+| Vega | 3 | 4 | 5 |
+| Altair | 4 | 4 | 5 |
+
+Use [routing guidance](../../skills/antares-lite/references/model-routing.md)
+and [portable JSON ratings](../../skills/antares-lite/references/model-routing.json)
+against the host's actual supported model inventory. Preserve user model and
+effort choices. Require a trusted capability assessment or record inherited
+unassessed fit; do not infer capability from a model name. Difficult loops,
+cross-call assumptions, backend contradictions and control-flow patches trigger
+escalation. Ratings never authorize delegation or supply missing evidence.
+
 ## Task decomposition
 
 Start with the user's question, not a checklist that runs every tool.
@@ -39,8 +67,10 @@ Start with the user's question, not a checklist that runs every tool.
 | --- | --- | --- | --- |
 | New JAR and class lookup | Sirius imports/indexes and queries | Domain expert only if needed | Verified identity, summary and bounded targets |
 | Explain a method/branch | Rigel resolves descriptor and inspects bytecode | CFG or adjacent claim check | Indexed observations and explicit unknowns |
+| Trace argument/guard context | Rigel queries exact references and one callsite | Inspect all indexed writers, preserve assumptions | Actual producers, argument maps and conditional scope |
 | Find suspicious transforms | Mira chooses categories and coverage | Rigel checks selected findings | Scan/payload/review counts and candidate provenance |
 | Reconstruct source | Vega selects backend and exact scope | Rigel for disputed semantics | Source, backend/version, extraction/failure caveats |
+| Validate rebuilt artifacts | Vega/Rigel compare explicit naming maps | Clean rebuild and separately authorized bounded probe | Distinct compilation, structure, finder and behavioral results |
 | Preview a concrete change | Altair drafts and reviews preview | Rigel when source effect needs clarification | Bound request, hashes, diff and static checks |
 | Apply that change | Altair uses existing authorization and preview | Index/check the output project and requested change | Artifact hash, verified output, successful indexing and observed change |
 | Archive audit | Sirius establishes identity, then bounded independent lanes | Cross-check only material claims | Declared category/class/method coverage and remaining gaps |
@@ -76,6 +106,13 @@ additional evidence; confirming its indexes is not confirming its runtime effect
 
 - **Same name, different overload:** retrieve descriptors, repeat with the
   selected descriptor, and compare only matching source/method results.
+- **Reported checksum conflict:** compare actual response fields and freshly
+  recomputed stored bytes before reporting divergence; filenames and memory
+  are insufficient.
+- **Nearby guard mistaken for counter input:** inspect each branch's actual
+  consumed producer set and destinations; preserve merged alternatives.
+- **One observed caller sets a false guard:** record its exact argument/write
+  context; do not conclude the field is never assigned or globally constant.
 - **Two decompilers disagree:** preserve both excerpts and check source
   instructions. Matching parameter counts do not prove overload identity.
 - **Finder page is truncated:** collect category pages using an exclusive cursor,
@@ -89,6 +126,8 @@ additional evidence; confirming its indexes is not confirming its runtime effect
   Do not publish an artifact as an incidental final step.
 - **Apply times out:** reconcile visible output before further mutation. Absence
   of a response is not evidence of failure.
+- **Reconstruction compiles and finders are empty:** verify disputed loop updates
+  independently. These checks cannot prove behavioral fidelity.
 
 ## Judge completion
 

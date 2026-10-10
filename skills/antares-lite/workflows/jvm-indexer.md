@@ -20,7 +20,10 @@ does not require import. A server-local pathname is not an import parameter;
    accept bytes that later fail indexing; do not call that analysis-ready.
    Existing indexed projects can reuse their summary. `archive_summary` and
    query tools also ensure an index, so repeated indexing is unnecessary.
-3. **Check identity.** Obtain `archive_summary` and compare `archiveSha256`
+3. **Check identity.** Use `verify_archive_identity` with the expected hash
+   when available. Require `matches` and, when supplied, `expectedMatches`.
+   Record actual and recorded hashes from the response, not memory. Obtain
+   `archive_summary` and compare `archiveSha256`
    to the project record and any caller-supplied expected checksum. Record
    class/package/method/field/Kotlin counts and manifest entry point when
    present. These are inventory observations, not runtime entry-point proof.
@@ -36,6 +39,12 @@ does not require import. A server-local pathname is not an import parameter;
 6. **Hand off.** Send the same identity/summary and the smallest target set
    needed by Rigel, Mira, Vega or Altair. State the remaining question and
    evidence pointers, not merely "analyze this class".
+
+When the question concerns callers or field use, page `method_references` or
+`field_references` with the exact descriptor and fixed direction/access filters.
+Follow `nextOffset` until the requested coverage is reached. Keep total versus
+returned counts and raw source instruction indexes. These are direct indexed
+sites, not a resolved runtime call graph or proof a writer executes.
 
 ## Coverage and recovery
 

@@ -85,9 +85,11 @@ def verify_server(archive, root):
     if hashes(distribution) != hashes(installed):
         raise ValueError("Extracted files differ from the installed distribution.")
     for category in ("docs/antares-lite-manual", "skills/antares-lite"):
-        for target in (distribution / category).rglob("*"):
-            if target.is_file() and target.read_bytes() != (ROOT / category / target.relative_to(distribution / category)).read_bytes():
-                raise ValueError(f"Packaged resource differs from source: {target.name}")
+        if hashes(distribution / category) != hashes(ROOT / category):
+            raise ValueError(f"Packaged resources missing or different: {category}")
+    for resource in ("scripts/antares_client.py", "scripts/README.md", "LICENSE"):
+        if (distribution / resource).read_bytes() != (ROOT / resource).read_bytes():
+            raise ValueError(f"Packaged resource differs from source: {resource}")
     messages = [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
         {"jsonrpc": "2.0", "method": "notifications/initialized"},

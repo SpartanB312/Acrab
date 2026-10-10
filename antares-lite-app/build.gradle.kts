@@ -15,17 +15,20 @@ val packagedManualDocs = listOf(
     "TOOL-REFERENCE.md",
     "SPECIALIST-WORKFLOWS.md",
     "METHOD-PATCHING.md",
+    "ANALYSIS-AND-VERIFICATION.md",
 )
 val antaresLiteSkills = rootProject.layout.projectDirectory.dir("skills/antares-lite")
 val packagedSkillFiles = listOf(
     "SKILL.md",
     "workflows/**",
+    "references/**",
     "specialists/bytecode-analyst/**",
     "specialists/bytecode-patcher/**",
     "specialists/decompiler/**",
     "specialists/evidence-finder/**",
     "specialists/jvm-indexer/**",
     "agents/openai.yaml",
+    "agents/antares-lite-coordinator.toml",
     "agents/antares-lite-bytecode-analyst.toml",
     "agents/antares-lite-bytecode-patcher.toml",
     "agents/antares-lite-decompiler.toml",
@@ -47,6 +50,9 @@ val generateToolCatalog by tasks.registering(JavaExec::class) {
 distributions {
     main {
         contents {
+            from(rootProject.layout.projectDirectory) {
+                include("LICENSE")
+            }
             from(generatedToolCatalog) {
                 into("catalog")
             }
@@ -57,6 +63,10 @@ distributions {
             from(antaresLiteSkills) {
                 into("skills/antares-lite")
                 include(packagedSkillFiles)
+            }
+            from(rootProject.layout.projectDirectory.dir("scripts")) {
+                into("scripts")
+                include("antares_client.py", "README.md")
             }
         }
     }

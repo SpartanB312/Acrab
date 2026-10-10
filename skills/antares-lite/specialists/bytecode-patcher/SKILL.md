@@ -9,10 +9,18 @@ Turn a concrete method change into a reviewable preview and, when authorized,
 a new artifact/project. Read [the shared contract](../../workflows/common.md)
 and [the patch workflow](../../workflows/bytecode-patcher.md).
 
+## Intelligence requirement
+
+Minimum **4/5**, recommended **4/5**, escalation **5/5** for branch deletion,
+control-flow edits or uncertain publication. Use
+[host model routing](../../references/model-routing.md). Rating or model choice
+does not authorize apply or substitute for preview/postchecks.
+
 ## Preferred tools
 
 `patch_catalog`, `method_patch_draft`, `method_patch_preview`,
-`apply_method_patch`; `method_bytecode` supplies anchors and output checks.
+`apply_method_patch`; `verify_archive_identity`, `method_bytecode` and
+`compare_structure` supply identity, anchors and output checks.
 
 ## Gates that matter
 
@@ -32,6 +40,9 @@ and [the patch workflow](../../workflows/bytecode-patcher.md).
 - Check output artifact/project and `verified`; record the raw `reindexed`
   flag and index the output explicitly when false. Check the requested change
   and reset instruction indexes for the new source.
+- Recompute output identity. Record unexpected structural changes and keep
+  any branch-removal claim conditional on its explicit caller/field assumptions.
+  Static verification and finder-zero do not establish intended behavior.
 
 ## Boundaries
 

@@ -15,23 +15,28 @@ checks pass.
 
 - **MCP-native:** exposes stdio and loopback-first HTTP JSON-RPC transports
   with complete tool schemas.
-- **Evidence-oriented:** provides class and string inventory, exact method
-  addressing, CFG and instruction evidence, and bounded numeric analysis.
+- **Evidence-oriented:** verifies current archive bytes and provides exact method
+  addressing, CFG, actual operand producers, direct references and conditional
+  numeric analysis with recorded assumptions.
 - **Obfuscation triage:** detects numeric decoding, string transforms, opaque
   guards, control-flow flattening, and invokedynamic dispatch patterns.
-- **Reconstruction:** bundles CFR and Vineflower backends and declaration-aware
-  method extraction.
+- **Reconstruction:** bundles CFR and Vineflower, declaration-aware method
+  extraction, bounded static string recovery and mapped structural comparison.
 - **Guarded patching:** binds every operation to source instruction indexes,
   archive checksums, method fingerprints, debug metadata, and a single-use
   preview.
-- **Agent-ready:** ships a coordinating skill, five specialist roles, workflow
-  instructions, and agent templates.
+- **Agent-ready:** ships a main-agent skill, five specialist roles, portable
+  intelligence requirements, model routing guidance and agent templates.
+- **Reproducible evidence:** includes a stdlib Python HTTP client with UTF-8
+  argument files, full response output and evidence exports with integrity checks.
 
 ## Requirements
 
 - JDK 21 or newer
 - A Git checkout with the bundled Gradle wrapper
 - An MCP client for stdio, or any JSON-capable HTTP client for HTTP transport
+
+Python 3.11 or newer is optional for the bundled client and repository checks.
 
 ## Quick Start
 
@@ -89,16 +94,30 @@ http://127.0.0.1:8080/mcp
 ```
 
 Readiness is available at `GET /health`. Responses are JSON documents; the
-server does not use SSE. HTTP sessions use an `Mcp-Session-Id` header.
+server does not use SSE. Initialization returns a unique `Mcp-Session-Id`;
+retain it on every later request. Send `notifications/initialized` after
+initialization (HTTP 202, no body). Close sessions with `DELETE /mcp`.
+
+The bundled file client handles this lifecycle and preserves full responses:
+
+```sh
+python scripts/antares_client.py --list --output tools.json
+python scripts/antares_client.py --archive example.jar --evidence-dir evidence --output imported.json
+python scripts/antares_client.py --tool method_bytecode --arguments-file method.json --output bytecode.json
+```
+
+Use UTF-8 JSON arguments from the live schema in `method.json`. The client
+checks imported identity against local bytes and supports `--expected-sha256`.
+See the [quickstart](docs/antares-lite-manual/USER-QUICKSTART.md) for complete examples.
 
 ### First Analysis Steps
 
 1. Call MCP `initialize`.
-2. Call MCP `tools/list` to inspect the schemas exposed by the connected
+2. Send `notifications/initialized`, then call MCP `tools/list` to inspect the schemas exposed by the connected
    server.
 3. Use `create_project` to import a JAR as Base64 bytes.
 4. Record the returned `projectId` and SHA-256 checksum.
-5. Call `index_archive`, then `archive_summary`.
+5. Call `verify_archive_identity`, `index_archive`, then `archive_summary`.
 6. Locate a class with `list_classes` or `search_classes`, inspect its methods
    with `class_summary`, and request exact bytecode evidence with
    `method_bytecode`.
@@ -108,16 +127,18 @@ complete JSON-RPC examples.
 
 ## Tool Surface
 
-Antares Lite registers 28 endpoints: 26 domain tools plus the `health` and
+Antares Lite registers 34 endpoints: 32 domain tools plus the `health` and
 `list_tools` platform endpoints. Runtime `tools/list` is always authoritative.
 
 | Area | Tools |
 | --- | --- |
-| Project and indexing | `create_project`, `list_projects`, `index_archive`, `archive_summary` |
+| Project and indexing | `create_project`, `list_projects`, `verify_archive_identity`, `index_archive`, `archive_summary` |
 | Reconnaissance | `list_classes`, `search_classes`, `search_strings`, `class_summary` |
 | Method evidence | `method_bytecode`, `method_cfg`, `method_stack_slice`, `cfg_constant_propagation` |
+| References and context | `method_references`, `field_references`, `method_call_context` |
 | Reconstruction | `list_decompiler_backends`, `decompile_class`, `decompile_method` |
 | Numeric and string evidence | `find_number_secrets`, `find_string_transforms` |
+| Static recovery and comparison | `recover_strings`, `compare_structure` |
 | Control-flow evidence | `find_opaque_predicates`, `find_control_flow_flattening`, `find_invokedynamic_dispatch` |
 | Aggregation | `evidence_summary`, `finder_catalog` |
 | Guarded patching | `patch_catalog`, `method_patch_draft`, `method_patch_preview`, `apply_method_patch` |
@@ -166,7 +187,11 @@ Start with the [Antares Lite skill](skills/antares-lite/SKILL.md). The
 [specialist workflow guide](docs/antares-lite-manual/SPECIALIST-WORKFLOWS.md)
 explains task decomposition, evidence levels, handoffs, conflict resolution,
 and completion criteria. Clients without subagent support can follow the same
-workflows directly.
+workflows directly. The main-agent [coordinator workflow](skills/antares-lite/workflows/coordinator.md)
+handles evidence conflicts and completion. [Intelligence requirements](skills/antares-lite/references/model-routing.md)
+and their [JSON ratings](skills/antares-lite/references/model-routing.json) guide
+selection from the host's supported inventory while preserving user model and
+single-agent constraints. They do not benchmark models or authorize delegation.
 
 ## Security Model
 
@@ -180,6 +205,11 @@ workflows directly.
   maliciousness verdict.
 - Decompiled source is reconstruction. Bytecode evidence remains authoritative
   when the two disagree.
+- Argument/field bindings are explicit assumptions about a selected context.
+  Direct references do not resolve reflection, virtual dispatch or unseen callers.
+- Compilation, matching structure, finder-zero and static verification are
+  separate from behavioral fidelity. Evidence checksums detect alteration,
+  not author authenticity or semantic correctness.
 - HTTP binds to loopback by default. Non-loopback binding requires
   `ANTARES_LITE_ALLOW_REMOTE=true` and must be placed behind an authenticated
   trust boundary.
@@ -226,6 +256,7 @@ Not supported:
 - [Tool reference](docs/antares-lite-manual/TOOL-REFERENCE.md)
 - [Specialist workflows](docs/antares-lite-manual/SPECIALIST-WORKFLOWS.md)
 - [Method patching](docs/antares-lite-manual/METHOD-PATCHING.md)
+- [Context and independent verification](docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md)
 - [Agent skill entrypoint](skills/antares-lite/SKILL.md)
 
 ## Project Layout
@@ -255,7 +286,16 @@ Create installable and distributable artifacts:
 
 Distribution archives are written to
 `antares-lite-app/build/distributions/`. The current release version is
-**1.2.1**.
+**1.3.0**. ZIP/TAR packages include the manual, skills, model routing references,
+generated catalog, license and reusable HTTP client.
+
+The [public case source ZIP](case/snake-deobf-src.zip) contains build scripts,
+seven Java classes and a bounded external probe. Repository checks verify clean
+extraction and launcher/resource parity, then compare 36 trim and 16 direction
+cases against the original fixture. A deliberately incorrect but compiling,
+finder-clean trim variant must fail that probe. These are bounded regression
+checks, not whole-program equivalence. See the
+[verification guide](docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md) for commands.
 
 ## License
 

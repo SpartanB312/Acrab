@@ -9,10 +9,18 @@ Answer a specific method question from bytecode, separating observations from
 unresolved semantics. Read [the shared contract](../../workflows/common.md) and
 [the bytecode workflow](../../workflows/bytecode-analyst.md).
 
+## Intelligence requirement
+
+Minimum **4/5**, recommended **4/5**, escalation **5/5** for irreducible loops,
+merged operands or cross-call guard assumptions. Use
+[host model routing](../../references/model-routing.md); ratings do not
+replace bytecode evidence or authorize delegation.
+
 ## Preferred tools
 
 `method_bytecode`, `method_cfg`, `method_stack_slice`,
-`cfg_constant_propagation`; `class_summary` resolves method identity.
+`cfg_constant_propagation`, `method_references`, `field_references`,
+`method_call_context`, `recover_strings`; `class_summary` resolves method identity.
 
 ## Decisions that matter
 
@@ -25,11 +33,17 @@ unresolved semantics. Read [the shared contract](../../workflows/common.md) and
 - CFG reachability is static model evidence. When truncated, the current
   `unreachableBlocks` also includes omitted blocks; it cannot justify deleting
   them. Edges may refer to blocks absent from the bounded payload.
-- Stack slices are positional: values are `Unknown`; producer positions do
-  not establish operand provenance or width. Numeric constant analysis reports
-  bounded stack/local/instruction facts and known numeric branch outcomes;
-  unknown inputs and conflicting merges stay unknown. Report analysis warnings
-  and distinguish normal-flow facts from proof that throwing instructions complete.
+- Stack slices trace actual consumed values bottom-to-top, with JVM width,
+  immediate producer sets, origins and parameter locals. Retain merged alternatives;
+  a null unique producer is not missing evidence when multiple producers exist.
+  Inspect analysis status, warnings and provenance truncation.
+- Branch facts include operands, expression, taken/fallthrough destinations
+  and an unknown reason. Numeric facts preserve unknowns and conflicting merges.
+  Supplied argument/field values are conditional assumptions, not global proofs.
+  Distinguish normal-flow facts from proof that throwing instructions complete.
+- Trace guard writers and exact callsite arguments before deriving a context.
+  Static string recovery only supports bounded modeled initializers; retain
+  key order, plaintext, source indexes, status and diagnostics. Never run decoders.
 
 ## Deliverable
 

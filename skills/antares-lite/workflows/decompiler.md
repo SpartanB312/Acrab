@@ -42,6 +42,22 @@ and use `cfr` by default when no preference exists.
 
 ## Retry and completion
 
+For source reconstruction, validate disputed loops with actual stack producers
+and branch destinations. Record initialization, update/decrement, removal path
+and retained coordinates. Use `recover_strings` only for supported static
+initializers, preserving literal spelling and ordered cyclic key values.
+
+If rebuilt output is requested, import its bytes as a new project, verify both
+identities and use `compare_structure` with explicit class/member naming maps.
+Compare access, inheritance, descriptors and entry point; intentional structural
+changes remain recorded differences. Compilation and zero detector residue
+do not prove body equivalence. A packaged source deliverable must rebuild after
+clean extraction using its included scripts and the declared JDK.
+
+Behavioral probes belong to a separately authorized external workflow, never
+to this static server. Report tested inputs, guard/key context, environment and
+negative control separately. Keep untested behavior unknown.
+
 If the requested backend is unavailable or fails, report that and name any
 fallback backend explicitly. Try at most the other supported backend for the
 same concrete issue; repeating identical calls only revisits the cache or

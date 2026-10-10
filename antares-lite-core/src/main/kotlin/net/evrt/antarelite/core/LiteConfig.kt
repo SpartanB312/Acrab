@@ -2,7 +2,7 @@ package net.evrt.antarelite.core
 
 data class LiteConfig(
     val serverName: String = "antares-lite",
-    val serverVersion: String = "1.2.1",
+    val serverVersion: String = "1.3.0",
     val workspacePath: String = "data",
     val maxArchiveBytes: Long = 128L * 1024 * 1024,
     val httpHost: String = "127.0.0.1",

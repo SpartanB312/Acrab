@@ -78,6 +78,8 @@ data class MethodStackSliceResult(
     val requestedArgumentSlots: Int,
     val slices: List<StackSliceInfo>,
     val warnings: List<String> = emptyList(),
+    val analysisStatus: String = "complete",
+    val truncated: Boolean = false,
 )
 
 @Serializable
@@ -87,6 +89,12 @@ data class StackSliceInfo(
     val valueKind: String,
     val value: String? = null,
     val slotWidth: Int,
+    val producerInstructionIndexes: List<Int> = emptyList(),
+    val originInstructionIndexes: List<Int> = emptyList(),
+    val parameterLocalIndexes: List<Int> = emptyList(),
+    val localIndex: Int? = null,
+    val expression: String? = null,
+    val provenanceTruncated: Boolean = false,
 )
 
 @Serializable
@@ -134,4 +142,8 @@ data class ConstantPropagationBranchFactInfo(
     val opcodeName: String,
     val condition: String,
     val knownOutcome: String,
+    val operands: List<StackSliceInfo> = emptyList(),
+    val takenTargetIndex: Int? = null,
+    val fallthroughTargetIndex: Int? = null,
+    val unknownReason: String? = null,
 )

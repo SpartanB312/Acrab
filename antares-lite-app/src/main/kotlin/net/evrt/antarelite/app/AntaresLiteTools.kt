@@ -663,7 +663,7 @@ private fun registerEvidenceTools(
     context.tools.register(
         ToolDefinition(
             "method_stack_slice",
-            "Return bounded positional stack-input candidates before one instruction.",
+            "Trace bounded consumed operand producers, origins and slot widths before one instruction.",
             schema(
                 required = listOf("projectId", "className", "methodName", "instructionIndex"),
                 properties = mapOf(

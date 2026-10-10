@@ -101,17 +101,12 @@ class BytecodeEvidenceService(
         require(targetInstructionIndex in instructions.indices) {
             "Instruction index out of range: $targetInstructionIndex"
         }
-        val requested = (argumentSlots ?: 1).coerceAtLeast(0)
-        val slices = (0 until requested).map { ordinal ->
-            StackSliceInfo(
-                argumentOrdinal = ordinal,
-                producerInstructionIndex = instructions.take(targetInstructionIndex)
-                    .indexOfLast { it !is LabelNode }.takeIf { it >= 0 },
-                valueKind = if (ordinal == 0) "Unknown" else "Unknown",
-                value = null,
-                slotWidth = 1,
-            )
-        }
+        require(instructions[targetInstructionIndex].opcode >= 0) { "instructionIndex must identify an executable instruction." }
+        if (argumentSlots != null) require(argumentSlots in 0..256) { "argumentSlots must be between 0 and 256." }
+        val provenance = OperandProvenance(target.classNode.name, target.method)
+        val numeric = NumericConstantAnalysis(target.classNode.name, target.method)
+        val slices = provenance.operands(targetInstructionIndex, argumentSlots, numeric)
+        val requested = argumentSlots ?: slices.sumOf { it.slotWidth }
         return MethodStackSliceResult(
             projectId = projectId,
             className = target.className,
@@ -124,7 +119,11 @@ class BytecodeEvidenceService(
             targetOpcodeName = opcodeName(instructions[targetInstructionIndex].opcode),
             requestedArgumentSlots = requested,
             slices = slices,
-            warnings = listOf("This Lite slice returns bounded positional candidates, not proof-level dataflow."),
+            warnings = provenance.warnings + numeric.warnings +
+                "Operands are ordered bottom-to-top among consumed values; producer sets retain merged alternatives.",
+            analysisStatus = if (provenance.warnings.isNotEmpty()) "unavailable"
+                else if (provenance.frames[targetInstructionIndex] == null) "unreachable" else "complete",
+            truncated = slices.any { it.provenanceTruncated },
         )
     }
 
@@ -138,6 +137,7 @@ class BytecodeEvidenceService(
         val blocks = buildBlocks(target.method)
         val edges = buildEdges(target.method, blocks)
         val analysis = NumericConstantAnalysis(target.classNode.name, target.method)
+        val provenance = OperandProvenance(target.classNode.name, target.method)
         val visibleBlocks = blocks.take(MAX_BLOCKS)
         val instructionFacts = target.method.instructions.toArray().mapIndexedNotNull { index, instruction ->
             if (instruction.opcode < 0 || instruction is JumpInsnNode) return@mapIndexedNotNull null
@@ -159,12 +159,24 @@ class BytecodeEvidenceService(
             block.instructionIndexes.mapNotNull { index ->
                 val instruction = target.method.instructions.get(index)
                 if (instruction !is JumpInsnNode) return@mapNotNull null
+                val operands = provenance.operands(index, numeric = analysis)
+                val outcome = analysis.outcome(index)
                 ConstantPropagationBranchFactInfo(
                     instructionIndex = index,
                     blockId = block.id,
                     opcodeName = opcodeName(instruction.opcode),
-                    condition = opcodeName(instruction.opcode),
-                    knownOutcome = analysis.outcome(index),
+                    condition = branchCondition(instruction.opcode, operands),
+                    knownOutcome = outcome,
+                    operands = operands,
+                    takenTargetIndex = methodIndexOf(instruction.label, target.method),
+                    fallthroughTargetIndex = if (instruction.opcode == Opcodes.GOTO) null else
+                        (index + 1 until target.method.instructions.size()).firstOrNull {
+                            target.method.instructions[it].opcode >= 0
+                        },
+                    unknownReason = if (outcome == "unknown") {
+                        if (analysis.frames.getOrNull(index) == null) "unreachable-or-analysis-unavailable"
+                        else "nonconstant-or-conflicting-operands"
+                    } else null,
                 )
             }
         }
@@ -197,7 +209,7 @@ class BytecodeEvidenceService(
             },
             branchFacts = branchFacts,
             instructionFacts = instructionFacts.take(MAX_INSTRUCTIONS),
-            warnings = analysis.warnings + "Numeric constants are propagated without executing target code; " +
+            warnings = analysis.warnings + provenance.warnings + "Numeric constants are propagated without executing target code; " +
                 "unknown inputs and conflicting merges remain unknown. Facts describe normal control flow, " +
                 "not runtime linking or proof that throwing instructions complete.",
         )

@@ -144,13 +144,17 @@ class LiteToolsIntegrationTest {
                 call(context, "method_cfg", """{"projectId":"$projectId","className":"Smoke","methodName":"decode"}""")
                     .contains("block_"),
             )
-            assertTrue(
-                call(
-                    context,
-                    "method_stack_slice",
-                    """{"projectId":"$projectId","className":"Smoke","methodName":"decode","instructionIndex":2}""",
-                ).contains("Unknown"),
-            )
+            val bytecode = Json.parseToJsonElement(call(context, "method_bytecode",
+                """{"projectId":"$projectId","className":"Smoke","methodName":"decode"}""")).jsonObject
+            val instructions = bytecode.getValue("instructions").jsonArray.map { it.jsonObject }
+            val store = instructions.first { it.getValue("opcodeName").jsonPrimitive.content == "ASTORE" }
+            val storeIndex = store.getValue("index").jsonPrimitive.content.toInt()
+            val slice = Json.parseToJsonElement(call(context, "method_stack_slice",
+                """{"projectId":"$projectId","className":"Smoke","methodName":"decode","instructionIndex":$storeIndex}"""))
+                .jsonObject.getValue("slices").jsonArray.single().jsonObject
+            val producer = slice.getValue("producerInstructionIndex").jsonPrimitive.content.toInt()
+            assertEquals("LDC", instructions.single { it.getValue("index").jsonPrimitive.content.toInt() == producer }
+                .getValue("opcodeName").jsonPrimitive.content)
             assertTrue(
                 call(context, "cfg_constant_propagation", """{"projectId":"$projectId","className":"Smoke","methodName":"decode"}""")
                     .contains("unknown"),

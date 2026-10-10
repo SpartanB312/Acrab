@@ -15,10 +15,12 @@ import java.io.ByteArrayOutputStream
 
 class JarIndexer {
     fun index(projectId: String, archivePath: Path, archiveSha256: String? = null): ProjectIndex {
-        val resolvedSha = archiveSha256 ?: sha256File(archivePath)
+        val resolvedSha = sha256File(archivePath)
+        require(archiveSha256 == null || archiveSha256 == resolvedSha) { "Source archive checksum changed before indexing." }
         val classes = mutableListOf<ClassInfo>()
         val strings = mutableListOf<StringReference>()
         val invocations = mutableListOf<InvocationReference>()
+        val fieldReferences = mutableListOf<FieldReference>()
 
         var manifestMainClass: String? = null
         JarFile(archivePath.toFile()).use { jar ->
@@ -32,6 +34,7 @@ class JarIndexer {
                 classes += parsed.first
                 strings += parsed.second
                 invocations += parsed.third
+                fieldReferences += parsed.fourth
             }
         }
 
@@ -46,6 +49,7 @@ class JarIndexer {
             classes = classes.sortedBy { it.name },
             strings = strings,
             invocations = invocations,
+            fieldReferences = fieldReferences,
         )
     }
 
@@ -132,15 +136,24 @@ class JarIndexer {
         else -> "OPCODE_$opcode"
     }
 
-    private fun parseClass(bytes: ByteArray): Triple<ClassInfo, List<StringReference>, List<InvocationReference>> {
+    private data class ParsedClass(val first: ClassInfo, val second: List<StringReference>,
+        val third: List<InvocationReference>, val fourth: List<FieldReference>)
+
+    private fun parseClass(bytes: ByteArray): ParsedClass {
         val classNode = ClassNode()
         ClassReader(bytes).accept(classNode, ClassReader.SKIP_FRAMES)
         val strings = mutableListOf<StringReference>()
         val invocations = mutableListOf<InvocationReference>()
+        val fieldReferences = mutableListOf<FieldReference>()
 
         classNode.methods.forEach { method ->
             method.instructions.toArray().forEachIndexed { index, instruction ->
                 when (instruction) {
+                    is org.objectweb.asm.tree.FieldInsnNode -> fieldReferences += FieldReference(
+                        normalizeInternalName(classNode.name), method.name, method.desc,
+                        normalizeInternalName(instruction.owner), instruction.name, instruction.desc,
+                        net.evrt.antarelite.analysis.support.OpcodeNames.of(instruction.opcode), index,
+                    )
                     is LdcInsnNode -> if (instruction.cst is String) {
                         val value = instruction.cst as String
                         strings += StringReference(
@@ -199,6 +212,7 @@ class JarIndexer {
                     name = field.name,
                     descriptor = field.desc,
                     accessFlags = accessFlags(field.access),
+                    constantValue = field.value?.toString(),
                 )
             },
             methods = classNode.methods.map { method ->
@@ -222,7 +236,7 @@ class JarIndexer {
                 )
             },
         )
-        return Triple(classInfo, strings, invocations)
+        return ParsedClass(classInfo, strings, invocations, fieldReferences)
     }
 
     private fun methodMetrics(method: MethodNode): MethodMetrics {

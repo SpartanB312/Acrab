@@ -73,3 +73,13 @@ fun optionalStringList(arguments: JsonObject?, name: String): List<String> {
             ?: throw IllegalArgumentException("'$name' must contain only strings.")
     }
 }
+
+fun optionalStringMap(arguments: JsonObject?, name: String): Map<String, String> {
+    val value = arguments?.get(name) ?: return emptyMap()
+    val objectValue = value as? JsonObject ?: throw IllegalArgumentException("'$name' must be an object of strings.")
+    return objectValue.mapValues { (_, element) ->
+        val primitive = element as? JsonPrimitive
+        require(primitive != null && primitive.isString) { "'$name' values must be strings." }
+        primitive.content
+    }
+}

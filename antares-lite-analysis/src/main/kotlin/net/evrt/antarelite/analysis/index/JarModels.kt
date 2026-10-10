@@ -36,6 +36,7 @@ data class ProjectIndex(
     val classes: List<ClassInfo>,
     val strings: List<StringReference>,
     val invocations: List<InvocationReference>,
+    val fieldReferences: List<FieldReference> = emptyList(),
 )
 
 @Serializable
@@ -58,6 +59,7 @@ data class FieldInfo(
     val name: String,
     val descriptor: String,
     val accessFlags: List<String>,
+    val constantValue: String? = null,
 )
 
 @Serializable
@@ -118,4 +120,26 @@ data class InvocationReference(
     val bootstrapArguments: List<String> = emptyList(),
     val opcode: String,
     val instructionIndex: Int,
+)
+
+@Serializable
+data class FieldReference(
+    val ownerClass: String,
+    val sourceMethod: String,
+    val sourceDescriptor: String,
+    val targetOwner: String,
+    val targetName: String,
+    val targetDescriptor: String,
+    val opcode: String,
+    val instructionIndex: Int,
+)
+
+@Serializable
+data class ArchiveIdentity(
+    val projectId: String,
+    val recordedSha256: String,
+    val observedSha256: String?,
+    val matches: Boolean,
+    val expectedSha256: String? = null,
+    val expectedMatches: Boolean? = null,
 )

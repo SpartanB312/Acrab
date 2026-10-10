@@ -16,11 +16,11 @@ import kotlin.test.assertTrue
 
 class LiteToolsIntegrationTest {
     @Test
-    fun `registers exactly twenty-six analysis tools`() {
+    fun `registers thirty-two domain tools and two platform tools`() {
         LiteContext(LiteConfig(workspacePath = tempWorkspace())).use { context ->
             registerLiteTools(context)
-            assertEquals(26, context.tools.analysisDefinitions().size)
-            assertEquals(28, context.tools.definitions().size)
+            assertEquals(32, context.tools.analysisDefinitions().size)
+            assertEquals(34, context.tools.definitions().size)
         }
     }
 
@@ -162,7 +162,7 @@ class LiteToolsIntegrationTest {
             assertTrue(
                 call(context, "evidence_summary", """{"projectId":"$projectId"}""").contains("categorySummary"),
             )
-            assertEquals(26, Json.parseToJsonElement(call(context, "list_tools", "{}")).jsonArray.size)
+            assertEquals(32, Json.parseToJsonElement(call(context, "list_tools", "{}")).jsonArray.size)
         }
     }
 

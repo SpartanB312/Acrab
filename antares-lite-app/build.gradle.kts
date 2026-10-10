@@ -67,6 +67,7 @@ dependencies {
     implementation(project(":antares-lite-mcp"))
     runtimeOnly(libs.ktor.server.netty)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.bundles.asm)
 }
 
 tasks.matching { it.name in setOf("distZip", "distTar", "installDist") }.configureEach {

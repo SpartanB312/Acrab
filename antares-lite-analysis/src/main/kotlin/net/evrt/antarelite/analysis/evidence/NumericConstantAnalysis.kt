@@ -10,10 +10,15 @@ internal data class NumericValue(val basic: BasicValue, val constant: Number? = 
 }
 
 /** A flat constant lattice: conflicting values merge to unknown, never to a guessed value. */
-internal class NumericInterpreter : Interpreter<NumericValue>(ASM9) {
+internal class NumericInterpreter(
+    private val parameters: Map<Int, Number> = emptyMap(),
+    private val fields: Map<String, Number> = emptyMap(),
+) : Interpreter<NumericValue>(ASM9) {
     private val basic = BasicInterpreter()
 
     override fun newValue(type: Type?): NumericValue? = basic.newValue(type)?.let { NumericValue(it) }
+    override fun newParameterValue(isInstanceMethod: Boolean, local: Int, type: Type): NumericValue =
+        NumericValue(basic.newValue(type), parameters[local])
 
     override fun newOperation(insn: AbstractInsnNode): NumericValue {
         val constant: Number? = when (insn.opcode) {
@@ -24,6 +29,7 @@ internal class NumericInterpreter : Interpreter<NumericValue>(ASM9) {
             DCONST_0, DCONST_1 -> (insn.opcode - DCONST_0).toDouble()
             BIPUSH, SIPUSH -> (insn as IntInsnNode).operand
             LDC -> (insn as LdcInsnNode).cst as? Number
+            GETSTATIC -> (insn as FieldInsnNode).let { fields["${it.owner}.${it.name}:${it.desc}"] }
             else -> null
         }
         return NumericValue(basic.newOperation(insn), constant)
@@ -97,9 +103,13 @@ internal class NumericInterpreter : Interpreter<NumericValue>(ASM9) {
         if (left == right) left else NumericValue(basic.merge(left.basic, right.basic))
 }
 
-internal class NumericConstantAnalysis(owner: String, private val method: MethodNode) {
+internal class NumericConstantAnalysis(owner: String, private val method: MethodNode,
+    arguments: Map<String, String> = emptyMap(), fields: Map<String, String> = emptyMap()) {
     val warnings = mutableListOf<String>()
-    private val interpreter = NumericInterpreter()
+    private val interpreter = NumericInterpreter(parameterConstants(method, arguments), fields.mapValues { (key, value) ->
+        require(key.contains(':')) { "fieldValues keys must be owner/name.field:descriptor." }
+        numericLiteral(Type.getType(key.substringAfterLast(':')), value)
+    })
     val frames: Array<Frame<NumericValue>?> = if (method.instructions.size() > 10_000 ||
         method.instructions.size().toLong() * (method.maxLocals + method.maxStack) > 2_000_000) {
         warnings += "Numeric analysis skipped: the method exceeds the instruction or frame analysis budget."
@@ -139,6 +149,32 @@ internal class NumericConstantAnalysis(owner: String, private val method: Method
         }
         return if (value) "taken" else "not-taken"
     }
+}
+
+internal fun numericLiteral(type: Type, value: String): Number = when (type.sort) {
+    Type.BOOLEAN -> value.toInt().also { require(it in 0..1) { "Boolean assumptions must be 0 or 1." } }
+    Type.BYTE -> value.toByte().toInt()
+    Type.CHAR -> value.toInt().also { require(it in 0..65535) { "Char assumption out of range." } }
+    Type.SHORT -> value.toShort().toInt()
+    Type.INT -> value.toInt()
+    Type.LONG -> value.toLong()
+    Type.FLOAT -> value.toFloat().also { require(it.isFinite()) { "Assumptions must be finite." } }
+    Type.DOUBLE -> value.toDouble().also { require(it.isFinite()) { "Assumptions must be finite." } }
+    else -> throw IllegalArgumentException("Only primitive numeric argument and static-field assumptions are supported.")
+}
+
+private fun parameterConstants(method: MethodNode, arguments: Map<String, String>): Map<Int, Number> {
+    val types = Type.getArgumentTypes(method.desc)
+    require(arguments.size <= types.size) { "Too many argumentValues." }
+    var slot = if (method.access and ACC_STATIC != 0) 0 else 1
+    val slots = types.map { type -> slot.also { slot += type.size } }
+    return arguments.map { (key, value) ->
+        val ordinal = key.toIntOrNull()
+        require(ordinal != null && ordinal in types.indices && key == ordinal.toString()) {
+            "argumentValues keys must be zero-based formal argument ordinals."
+        }
+        slots[ordinal] to numericLiteral(types[ordinal], value)
+    }.toMap()
 }
 
 internal fun NumericValue.fact(ordinal: Int): StackSliceInfo = StackSliceInfo(

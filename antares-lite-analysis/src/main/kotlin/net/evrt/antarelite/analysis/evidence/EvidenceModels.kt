@@ -18,6 +18,8 @@ data class MethodBytecodeResult(
     val instructions: List<BytecodeInstructionInfo>,
     val labelIndexes: List<Int> = emptyList(),
     val warnings: List<String> = emptyList(),
+    val inputSha256: String = "",
+    val analysisVersion: String = "operand-v1",
 )
 
 @Serializable
@@ -45,6 +47,8 @@ data class MethodCfgResult(
     val edges: List<CfgEdgeInfo>,
     val unreachableBlocks: List<String>,
     val warnings: List<String> = emptyList(),
+    val inputSha256: String = "",
+    val analysisVersion: String = "operand-v1",
 )
 
 @Serializable
@@ -80,6 +84,8 @@ data class MethodStackSliceResult(
     val warnings: List<String> = emptyList(),
     val analysisStatus: String = "complete",
     val truncated: Boolean = false,
+    val inputSha256: String = "",
+    val analysisVersion: String = "operand-v1",
 )
 
 @Serializable
@@ -112,6 +118,11 @@ data class ConstantPropagationResult(
     val branchFacts: List<ConstantPropagationBranchFactInfo>,
     val instructionFacts: List<InstructionConstantFactInfo> = emptyList(),
     val warnings: List<String> = emptyList(),
+    val inputSha256: String = "",
+    val analysisVersion: String = "operand-v1",
+    val argumentValues: Map<String, String> = emptyMap(),
+    val fieldValues: Map<String, String> = emptyMap(),
+    val scope: String = "intraprocedural-normal-flow",
 )
 
 @Serializable

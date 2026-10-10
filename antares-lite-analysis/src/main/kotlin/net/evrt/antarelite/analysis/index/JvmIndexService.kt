@@ -9,7 +9,10 @@ class JvmIndexService(
     private val cache = ConcurrentHashMap<String, ProjectIndex>()
 
     fun ensureIndex(projectId: String): ProjectIndex {
-        val project = projects.require(projectId)
+        val project = try { projects.requireVerified(projectId) } catch (failure: IllegalArgumentException) {
+            cache.remove(projectId)
+            throw failure
+        }
         cache[projectId]?.let { return it }
         val index = indexer.index(project.projectId, java.nio.file.Path.of(project.archivePath), project.sha256)
         cache[projectId] = index

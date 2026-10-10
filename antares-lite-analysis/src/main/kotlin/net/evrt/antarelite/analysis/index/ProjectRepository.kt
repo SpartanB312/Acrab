@@ -131,6 +131,23 @@ class ProjectRepository(private val config: LiteConfig) : AutoCloseable {
     fun require(projectId: String): ProjectRecord =
         get(projectId) ?: throw IllegalArgumentException("Project not found: $projectId")
 
+    fun verifyIdentity(projectId: String, expectedSha256: String? = null): ArchiveIdentity {
+        if (expectedSha256 != null) require(expectedSha256.matches(Regex("[a-fA-F0-9]{64}"))) {
+            "expectedSha256 must contain 64 hexadecimal characters."
+        }
+        val project = require(projectId)
+        val path = Path.of(project.archivePath)
+        val observed = if (Files.isRegularFile(path)) sha256(path) else null
+        return ArchiveIdentity(projectId, project.sha256, observed, project.sha256 == observed,
+            expectedSha256?.lowercase(), expectedSha256?.let { observed == it.lowercase() })
+    }
+
+    fun requireVerified(projectId: String): ProjectRecord {
+        val identity = verifyIdentity(projectId)
+        require(identity.matches) { "Source archive identity mismatch for $projectId; import changed bytes as a new project." }
+        return require(projectId)
+    }
+
     fun delete(projectId: String): Boolean {
         val removed = projects.remove(projectId) ?: return false
         synchronized(lock) {

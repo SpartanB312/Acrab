@@ -39,6 +39,7 @@ import net.evrt.antarelite.analysis.support.analysisJson
 import net.evrt.antarelite.analysis.support.optionalInt
 import net.evrt.antarelite.analysis.support.optionalString
 import net.evrt.antarelite.analysis.support.optionalStringList
+import net.evrt.antarelite.analysis.support.optionalStringMap
 import net.evrt.antarelite.analysis.support.requiredInt
 import net.evrt.antarelite.analysis.support.requiredString
 import net.evrt.antarelite.analysis.support.schema
@@ -65,6 +66,7 @@ fun registerLiteTools(context: LiteContext) {
     registerPatchTools(context, patcher)
     registerEvidenceTools(context, projects, indexes)
     registerFinderTools(context, indexes)
+    registerAnalysisExtensionTools(context, projects, indexes)
     registerBaseTools(context)
 }
 
@@ -692,10 +694,10 @@ private fun registerEvidenceTools(
         ToolDefinition(
             "cfg_constant_propagation",
             "Compute conservative per-block constant and branch facts without executing target code.",
-            schema(
+            stringMapProperties(schema(
                 required = listOf("projectId", "className", "methodName"),
                 properties = mapOf("methodDescriptor" to "string"),
-            ),
+            ), "argumentValues", "fieldValues"),
         ),
     ) { arguments ->
         ToolResult.success(
@@ -706,6 +708,8 @@ private fun registerEvidenceTools(
                     className = requiredString(arguments, "className"),
                     methodName = requiredString(arguments, "methodName"),
                     descriptor = optionalString(arguments, "methodDescriptor"),
+                    argumentValues = optionalStringMap(arguments, "argumentValues"),
+                    fieldValues = optionalStringMap(arguments, "fieldValues"),
                 ),
             ),
         )

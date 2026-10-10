@@ -38,6 +38,7 @@ class BytecodeEvidenceService(
         }
         return MethodBytecodeResult(
             projectId = projectId,
+            inputSha256 = target.inputSha256,
             className = target.className,
             methodName = target.method.name,
             descriptor = target.method.desc,
@@ -73,6 +74,7 @@ class BytecodeEvidenceService(
         val reachable = reachable(blocks.firstOrNull()?.id, edges)
         return MethodCfgResult(
             projectId = projectId,
+            inputSha256 = target.inputSha256,
             className = target.className,
             methodName = target.method.name,
             descriptor = target.method.desc,
@@ -109,6 +111,7 @@ class BytecodeEvidenceService(
         val requested = argumentSlots ?: slices.sumOf { it.slotWidth }
         return MethodStackSliceResult(
             projectId = projectId,
+            inputSha256 = target.inputSha256,
             className = target.className,
             methodName = target.method.name,
             descriptor = target.method.desc,
@@ -132,11 +135,13 @@ class BytecodeEvidenceService(
         className: String,
         methodName: String,
         descriptor: String?,
+        argumentValues: Map<String, String> = emptyMap(),
+        fieldValues: Map<String, String> = emptyMap(),
     ): ConstantPropagationResult {
         val target = loadMethod(projectId, className, methodName, descriptor)
         val blocks = buildBlocks(target.method)
         val edges = buildEdges(target.method, blocks)
-        val analysis = NumericConstantAnalysis(target.classNode.name, target.method)
+        val analysis = NumericConstantAnalysis(target.classNode.name, target.method, argumentValues, fieldValues)
         val provenance = OperandProvenance(target.classNode.name, target.method)
         val visibleBlocks = blocks.take(MAX_BLOCKS)
         val instructionFacts = target.method.instructions.toArray().mapIndexedNotNull { index, instruction ->
@@ -182,6 +187,11 @@ class BytecodeEvidenceService(
         }
         return ConstantPropagationResult(
             projectId = projectId,
+            inputSha256 = target.inputSha256,
+            argumentValues = argumentValues,
+            fieldValues = fieldValues,
+            scope = if (argumentValues.isEmpty() && fieldValues.isEmpty()) "intraprocedural-normal-flow"
+                else "conditional-on-supplied-assumptions",
             className = target.className,
             methodName = target.method.name,
             descriptor = target.method.desc,
@@ -215,13 +225,13 @@ class BytecodeEvidenceService(
         )
     }
 
-    private fun loadMethod(
+    internal fun loadMethod(
         projectId: String,
         className: String,
         methodName: String,
         descriptor: String?,
     ): LoadedMethod {
-        val project = projects.require(projectId)
+        val project = projects.requireVerified(projectId)
         indexes.ensureIndex(projectId)
         JarFile(Path.of(project.archivePath).toFile()).use { jar ->
             val entry = jar.getJarEntry(className.replace('.', '/') + ".class")
@@ -235,6 +245,7 @@ class BytecodeEvidenceService(
                 method = resolved.method,
                 matchKind = resolved.matchKind,
                 requestedDescriptor = resolved.requestedDescriptor,
+                inputSha256 = project.sha256,
             )
         }
     }
@@ -380,11 +391,12 @@ class BytecodeEvidenceService(
     }
 }
 
-private data class LoadedMethod(
+internal data class LoadedMethod(
     val classNode: ClassNode,
     val method: MethodNode,
     val matchKind: net.evrt.antarelite.analysis.support.MethodMatchKind,
     val requestedDescriptor: String?,
+    val inputSha256: String,
 ) {
     /** Dot-separated class name, so responses describe the class that was actually addressed. */
     val className: String get() = classNode.name.replace('/', '.')

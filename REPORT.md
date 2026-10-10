@@ -1,12 +1,23 @@
 # Deobfuscating `snake.jar` with MiniMax M3.1 Flash and Antares Lite 1.2.1
 
-**Target:** a 6,498-byte Java SE archive containing seven obfuscated classes.\
-**Goal:** remove string/constant obfuscation, control-flow obfuscation, and identifier renaming; reconstruct readable source; and rebuild a working artifact.\
-**Result:** the targeted obfuscation was removed, the reconstructed source compiled successfully, and no behavioral divergence was observed under the static and runtime differential checks described in §6.
+**Target:** a 6,498-byte Java SE archive containing seven classes, heavily obfuscated with **Zelix KlassMaster (ZKM)**.\
+**Goal:** remove string/constant obfuscation, control-flow obfuscation, and identifier renaming; reconstruct readable
+source; and rebuild a working artifact.\
+**Result:** the targeted obfuscation was removed, the reconstructed source compiled successfully, and no behavioral
+divergence was observed under the static and runtime differential checks described in §6.
 
-This is a case study of an **LLM-driven reverse-engineering workflow**, not a claim that the model reasoned flawlessly. It did not. During the run, the agents produced several incorrect intermediate conclusions, including one reconstruction defect that compiled and ran but changed program behavior. The final result was obtained because the workflow repeatedly challenged those conclusions through independent evidence and differential verification.
+Despite its small program size, the target is not a trivial renaming-only sample. Its ZKM protection substantially
+degrades conventional decompilation: one key method could not be reconstructed by Vineflower at all, while CFR reported
+extensive failed regions in the most heavily obfuscated class. Program size and obfuscation intensity are therefore
+treated as separate dimensions throughout this report.
 
-This document is self-contained and prepared for public release. Host-specific paths, local project/session identifiers, ports, process IDs, and other machine-local state have been removed.
+This is a case study of an **LLM-driven reverse-engineering workflow**, not a claim that the model reasoned flawlessly.
+It did not. During the run, the agents produced several incorrect intermediate conclusions, including one reconstruction
+defect that compiled and ran but changed program behavior. The final result was obtained because the workflow repeatedly
+challenged those conclusions through independent evidence and differential verification.
+
+This document is self-contained and prepared for public release. Host-specific paths, local project/session identifiers,
+ports, process IDs, and other machine-local state have been removed.
 
 ---
 
@@ -15,8 +26,8 @@ This document is self-contained and prepared for public release. Host-specific p
 The original target and the reconstructed source package used in this case study are included in the repository:
 
 | Artifact                                               | Description                                                                        |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| [`case/snake.jar`](case/snake.jar)                     | Original obfuscated target, unmodified                                             |
+|--------------------------------------------------------|------------------------------------------------------------------------------------|
+| [`case/snake.jar`](case/snake.jar)                     | Original ZKM-obfuscated target, unmodified                                         |
 | [`case/snake-deobf-src.zip`](case/snake-deobf-src.zip) | Reconstructed readable Java source, build script, reports, and supporting material |
 
 Original target SHA-256:
@@ -25,16 +36,18 @@ Original target SHA-256:
 d4802826f15cb6dc2d1d73f01b7676779a7f3bde239e723680d8ffebe2cfa4ac
 ```
 
-These files allow the case study to be inspected against the exact target described below rather than against an unspecified sample.
+These files allow the case study to be inspected against the exact target described below rather than against an
+unspecified sample.
 
 ---
 
 ## Experiment setup
 
 | Property                 | Value                                                              |
-| ------------------------ | ------------------------------------------------------------------ |
+|--------------------------|--------------------------------------------------------------------|
 | Model                    | **MiniMax M3.1 Flash Preview**                                     |
 | Antares Lite             | **1.2.1**                                                          |
+| Obfuscator               | **Zelix KlassMaster (ZKM)25 obfuscation**                          |
 | Target                   | [`case/snake.jar`](case/snake.jar), 6,498 bytes                    |
 | Program size             | 7 classes, 28 methods, 23 fields                                   |
 | Coordinator              | 1 MiniMax M3.1 Flash agent                                         |
@@ -56,9 +69,11 @@ The five specialists followed Antares Lite's supplied role contracts:
 
 All specialists inherited the same underlying model as the coordinator.
 
-Unless explicitly stated otherwise, descriptions such as “the coordinator read”, “the coordinator concluded”, or “the reconstruction initially assumed” refer to agent actions rather than human semantic analysis.
+Unless explicitly stated otherwise, descriptions such as “the coordinator read”, “the coordinator concluded”, or “the
+reconstruction initially assumed” refer to agent actions rather than human semantic analysis.
 
-The important result is therefore not that MiniMax M3.1 Flash made no mistakes. It made several. The result is that the workflow allowed those mistakes to be detected, contained, and corrected before final delivery.
+The important result is therefore not that MiniMax M3.1 Flash made no mistakes. It made several. The result is that the
+workflow allowed those mistakes to be detected, contained, and corrected before final delivery.
 
 ---
 
@@ -84,9 +99,10 @@ The important result is therefore not that MiniMax M3.1 Flash made no mistakes. 
 # 1. Target artifact and identity
 
 | Property                   | Value                                                              |
-| -------------------------- | ------------------------------------------------------------------ |
+|----------------------------|--------------------------------------------------------------------|
 | File                       | [`case/snake.jar`](case/snake.jar)                                 |
 | Size                       | 6,498 bytes                                                        |
+| Obfuscator                 | Zelix KlassMaster (ZKM), heavily obfuscated                        |
 | SHA-256                    | `d4802826f15cb6dc2d1d73f01b7676779a7f3bde239e723680d8ffebe2cfa4ac` |
 | Classes                    | 7 (`a`–`g`, default package)                                       |
 | Methods                    | 28                                                                 |
@@ -104,21 +120,25 @@ Before semantic analysis began, the target identity was checked through four sep
 
 All reported the same SHA-256.
 
-This became relevant later when a specialist reported that the server-side artifact had a different hash. Independent recomputation showed that no mismatch existed; the specialist had introduced a transcription error while comparing the strings.
+This became relevant later when a specialist reported that the server-side artifact had a different hash. Independent
+recomputation showed that no mismatch existed; the specialist had introduced a transcription error while comparing the
+strings.
 
-The analysis environment used JDK 25.0.1 and Antares Lite 1.2.1 over its HTTP transport so multiple specialist processes could connect concurrently.
+The analysis environment used JDK 25.0.1 and Antares Lite 1.2.1 over its HTTP transport so multiple specialist processes
+could connect concurrently.
 
 ---
 
 # 2. Obfuscation inventory and remediation
 
-The target used three broad categories of protection addressed in this reconstruction:
+The target used three broad categories of ZKM protection addressed in this reconstruction:
 
 1. **string and numeric constant obfuscation**;
 2. **control-flow obfuscation / opaque predicates**;
 3. **identifier renaming**.
 
-The implementation details of the first category differ enough that strings and numeric constants are discussed separately below.
+The implementation details of the first category differ enough that strings and numeric constants are discussed
+separately below.
 
 ---
 
@@ -127,15 +147,17 @@ The implementation details of the first category differ enough that strings and 
 Two static initializers decode string tables using a seven-byte cycling XOR key.
 
 | Location     | Ciphertext                       | XOR key                     | Plaintext                    |
-| ------------ | -------------------------------- | --------------------------- | ---------------------------- |
+|--------------|----------------------------------|-----------------------------|------------------------------|
 | `c.<clinit>` | `">\u0015l<\u0019"`              | `109,123,13,87,124,101,116` | `"Snake"`                    |
 | `e.<clinit>` | `"sA\FP\!~/0\u0005\u0006i{}bz4"` | `48,14,16,15,3,21,110`      | `{"COLISION! \n", "Yummy!"}` |
 
-The layout of the second table is self-describing. The byte following one encoded block specifies the size of the next block: the first block has length 11 and `charAt(11) = 6`, indicating that the second plaintext contains six characters.
+The layout of the second table is self-describing. The byte following one encoded block specifies the size of the next
+block: the first block has length 11 and `charAt(11) = 6`, indicating that the second plaintext contains six characters.
 
 The plaintext was recovered arithmetically. Loading or executing the target classes was unnecessary for this step.
 
-`"COLISION"` intentionally contains only one `L`. That spelling exists in the original program and was preserved verbatim.
+`"COLISION"` intentionally contains only one `L`. That spelling exists in the original program and was preserved
+verbatim.
 
 ---
 
@@ -150,7 +172,8 @@ Representative seeds include:
 81557154710886
 ```
 
-The resulting `long`, `char`, `int`, and `short` values feed comparisons and arguments whose surrounding obfuscated structure was later simplified.
+The resulting `long`, `char`, `int`, and `short` values feed comparisons and arguments whose surrounding obfuscated
+structure was later simplified.
 
 Static derivation produced, among other values:
 
@@ -186,7 +209,7 @@ Both were determined to be `false` at the relevant observed call sites by combin
 - direct bytecode inspection.
 
 | Field     | Write site                        | Observed result                                                  |
-| --------- | --------------------------------- | ---------------------------------------------------------------- |
+|-----------|-----------------------------------|------------------------------------------------------------------|
 | `d.e : Z` | `e.<init>(JLd;)V`, instruction 83 | reachable write; sole observed caller supplies `ICONST_0`        |
 | `e.h : Z` | `f.<init>(JC)V`, instruction 162  | reachable write; observed `char = 2429` path supplies `ICONST_0` |
 
@@ -200,11 +223,14 @@ knownOutcome: "unknown"
 
 for these branches.
 
-The final folding decision was therefore **not** accepted as a fact produced by that tool. It came from manual agent-side propagation across the observed call sites and was subsequently checked against bytecode and runtime behavior.
+The final folding decision was therefore **not** accepted as a fact produced by that tool. It came from manual
+agent-side propagation across the observed call sites and was subsequently checked against bytecode and runtime
+behavior.
 
 That distinction matters because tool output, reconstruction, and proof are not interchangeable evidence classes.
 
-Once the relevant value of `e.h` was resolved, the apparent irreducible structure collapsed into conventional loops, straight-line code, and an ordinary `TABLESWITCH`.
+Once the relevant value of `e.h` was resolved, the apparent irreducible structure collapsed into conventional loops,
+straight-line code, and an ordinary `TABLESWITCH`.
 
 ---
 
@@ -215,7 +241,7 @@ The original archive consists entirely of short obfuscated identifiers.
 The reconstructed source assigns semantic names and moves the code into a `snake` package.
 
 | Obfuscated | Reconstructed      |
-| ---------- | ------------------ |
+|------------|--------------------|
 | `c`        | `Snake`            |
 | `e`        | `GameThread`       |
 | `f`        | `SnakeFrame`       |
@@ -227,7 +253,8 @@ The reconstructed source assigns semantic names and moves the code into a `snake
 
 All seven classes, 28 methods, and 23 fields were given readable names in the source reconstruction.
 
-Antares Lite's bytecode patch schema does **not** provide arbitrary class, method, or field renaming. Identifier recovery was therefore performed at the reconstructed-source layer rather than through the patched JAR.
+Antares Lite's bytecode patch schema does **not** provide arbitrary class, method, or field renaming. Identifier
+recovery was therefore performed at the reconstructed-source layer rather than through the patched JAR.
 
 The rebuilt source artifact is consequently the primary complete deobfuscation output.
 
@@ -258,7 +285,7 @@ TABLESWITCH targets={
 Therefore:
 
 | Key             | Direction | Movement                 |
-| --------------- | --------: | ------------------------ |
+|-----------------|----------:|--------------------------|
 | `VK_LEFT` (37)  |         2 | `x - 1`, wrapping 0 → 19 |
 | `VK_UP` (38)    |         3 | `y - 1`, wrapping 0 → 19 |
 | `VK_RIGHT` (39) |         1 | `(x + 1) % 20`           |
@@ -271,7 +298,8 @@ A reverse-direction guard rejects immediate 180-degree turns:
 3 ↔ 4
 ```
 
-The error occurred because nested labels in Vineflower output were interpreted incorrectly. The raw bytecode was treated as authoritative once the two disagreed.
+The error occurred because nested labels in Vineflower output were interpreted incorrectly. The raw bytecode was treated
+as authoritative once the two disagreed.
 
 ---
 
@@ -288,9 +316,11 @@ Observed examples include:
 - the food collision comparison is transposed:\
   `head.x == food.y && head.y == food.x`;
 - `spawnFood` performs the corresponding transposed overlap comparison;
-- `spawnFood` resets a scan index to zero and then pre-increments it, causing rescans to begin at index 1 rather than rechecking index 0.
+- `spawnFood` resets a scan index to zero and then pre-increments it, causing rescans to begin at index 1 rather than
+  rechecking index 0.
 
-The independent verifier later checked these behaviors against the original bytecode and did not treat them as reconstruction mistakes.
+The independent verifier later checked these behaviors against the original bytecode and did not treat them as
+reconstruction mistakes.
 
 ---
 
@@ -334,10 +364,12 @@ The second loop trims tail elements using a local counter.
 The crucial branch semantics are:
 
 ```java
-if (counter != 0) {
-    counter--;
-} else {
-    body.remove(i);
+if(counter !=0){
+counter--;
+        }else{
+        body.
+
+remove(i);
 }
 ```
 
@@ -351,7 +383,8 @@ IFNE -> decrement path
 
 The branch consumes the counter value; the taken path reaches the `IINC` implementing the decrement.
 
-The initial reconstruction incorrectly associated this conditional with another value and therefore removed the decrement logic.
+The initial reconstruction incorrectly associated this conditional with another value and therefore removed the
+decrement logic.
 
 The correct overall behavior is:
 
@@ -396,7 +429,7 @@ draft
 Two patch sets were applied.
 
 | Patch | Method                                     | Operation                                                             | Result               |
-| ----- | ------------------------------------------ | --------------------------------------------------------------------- | -------------------- |
+|-------|--------------------------------------------|-----------------------------------------------------------------------|----------------------|
 | B1    | `a.keyPressed(Ljava/awt/event/KeyEvent;)V` | delete two instructions: `LDC 121593940001805`, `LSTORE 2`            | 55 → 53 instructions |
 | B2    | `e.d(ISI)V`                                | delete 19-instruction shift/or prefix stored into unused local slot 4 | 51 → 34 instructions |
 
@@ -446,7 +479,8 @@ B2
 composite artifact
 ```
 
-This matters because guarded patches are bound to artifact identity and instruction context. Composition is not implicitly valid across different source states.
+This matters because guarded patches are bound to artifact identity and instruction context. Composition is not
+implicitly valid across different source states.
 
 The resulting composite artifact:
 
@@ -466,7 +500,8 @@ and SHA-256:
 c59bb7340a23343314689a3b871ec870f30ddef975ea76d6e9f465231c0d3944
 ```
 
-The patcher's own success report was not treated as sufficient evidence. Independent scripts subsequently checked the artifact on disk and the relevant bytecode.
+The patcher's own success report was not treated as sufficient evidence. Independent scripts subsequently checked the
+artifact on disk and the relevant bytecode.
 
 ---
 
@@ -513,7 +548,7 @@ The complete reconstructed source distribution is available at:
 
 **[`case/snake-deobf-src.zip`](case/snake-deobf-src.zip)**
 
-The exact original artifact used for comparison is:
+The exact original ZKM-obfuscated artifact used for comparison is:
 
 **[`case/snake.jar`](case/snake.jar)**
 
@@ -539,7 +574,8 @@ Result:
 0 errors
 ```
 
-Two `this-escape` warnings remained. They arise from the original Swing construction pattern rather than from residual obfuscation.
+Two `this-escape` warnings remained. They arise from the original Swing construction pattern rather than from residual
+obfuscation.
 
 Compilation was treated only as a structural check.
 
@@ -552,7 +588,7 @@ A compiling reconstruction can still be semantically wrong, as the later verifie
 The rebuilt JAR was imported back into Antares Lite and scanned again.
 
 | Check                          |             Original |       Rebuilt |
-| ------------------------------ | -------------------: | ------------: |
+|--------------------------------|---------------------:|--------------:|
 | `find_string_transforms`       |                    2 |         **0** |
 | `find_number_secrets`          |                    1 |         **0** |
 | `find_opaque_predicates`       |                    7 |         **0** |
@@ -569,9 +605,11 @@ scanComplete: true
 truncated: false
 ```
 
-The result therefore means that **Antares Lite's supported finders detected no remaining instances of those patterns in the rebuilt artifact**.
+The result therefore means that **Antares Lite's supported finders detected no remaining instances of those patterns in
+the rebuilt artifact**.
 
-It does not establish the stronger proposition that the program is “free of all possible obfuscation” under every conceivable definition.
+It does not establish the stronger proposition that the program is “free of all possible obfuscation” under every
+conceivable definition.
 
 ---
 
@@ -586,7 +624,8 @@ At this point, the reconstructed program:
 
 That was not accepted as sufficient.
 
-A separate verifier agent was explicitly tasked to assume the reconstruction was wrong until independent evidence supported it.
+A separate verifier agent was explicitly tasked to assume the reconstruction was wrong until independent evidence
+supported it.
 
 The verifier used:
 
@@ -606,12 +645,13 @@ FAIL
 
 The defect was in the reconstructed trim logic.
 
-The incorrect source failed to decrement the loop counter correctly, so the snake body grew instead of being restored to its intended length.
+The incorrect source failed to decrement the loop counter correctly, so the snake body grew instead of being restored to
+its intended length.
 
 Measured behavior:
 
 | Observable       |   Original |       Broken rebuild | Fixed rebuild |
-| ---------------- | ---------: | -------------------: | ------------: |
+|------------------|-----------:|---------------------:|--------------:|
 | `body.size`      | constant 3 | 16 → 21, then frozen |    constant 3 |
 | stdout over 40 s |      empty |          `COLISION!` |         empty |
 
@@ -638,7 +678,8 @@ The broken reconstruction eventually printed:
 COLISION!
 ```
 
-The coordinator initially interpreted this as normal self-collision behavior and therefore as evidence that the game was functioning.
+The coordinator initially interpreted this as normal self-collision behavior and therefore as evidence that the game was
+functioning.
 
 It was actually the observable consequence of the defect.
 
@@ -654,13 +695,15 @@ observation
 interpretation
 ```
 
-A runtime test only helps if unexpected output is treated as evidence against the current hypothesis rather than rationalized into it.
+A runtime test only helps if unexpected output is treated as evidence against the current hypothesis rather than
+rationalized into it.
 
 ---
 
 ## 6.5 Correction and differential verification
 
-After correcting the branch interpretation, the rebuilt artifact was measured using the same type of body-length probe used against the original.
+After correcting the branch interpretation, the rebuilt artifact was measured using the same type of body-length probe
+used against the original.
 
 Eight samples at 0.5-second intervals produced:
 
@@ -673,7 +716,7 @@ for the rebuilt program.
 Observed state:
 
 | Property                    | Value |
-| --------------------------- | ----- |
+|-----------------------------|-------|
 | `body.size`                 | 3     |
 | `score`                     | 3     |
 | dark-gray body cells        | 3     |
@@ -682,7 +725,8 @@ Observed state:
 
 The program stayed alive during the observation window and produced no `COLISION!` output.
 
-Within the observables exercised by this verification process, no divergence from the original was detected after the fix.
+Within the observables exercised by this verification process, no divergence from the original was detected after the
+fix.
 
 This is **not** a formal semantic-equivalence proof.
 
@@ -712,7 +756,8 @@ The reconstructed source was adjusted to match the original class shape.
 
 One evidence JSON file associated with the UP branch transposed accesses to `d.a` and `d.b`.
 
-The reconstructed source had followed the class bytecode rather than that incorrect evidence file, so the implementation was already correct.
+The reconstructed source had followed the class bytecode rather than that incorrect evidence file, so the implementation
+was already correct.
 
 However, the JSON artifact itself was marked unsuitable for deciding field identity at that location.
 
@@ -788,16 +833,19 @@ In the actual operand-stack sequence, the conditional consumes the counter and t
 Correct conceptual behavior:
 
 ```java
-if (counter != 0) {
-    counter--;
-} else {
-    body.remove(i);
+if(counter !=0){
+counter--;
+        }else{
+        body.
+
+remove(i);
 }
 ```
 
 The incorrect interpretation changed runtime behavior substantially.
 
-This defect was not discovered by compilation or static finder cleanup. It was discovered only because the independent verifier compared runtime state.
+This defect was not discovered by compilation or static finder cleanup. It was discovered only because the independent
+verifier compared runtime state.
 
 ---
 
@@ -893,7 +941,8 @@ After restart, the service and stored analysis state were checked before work co
 
 One later execution exited unexpectedly after roughly 12 seconds.
 
-It was initially suspected to be a regression, but investigation showed interference from leftover Java processes from earlier verification runs.
+It was initially suspected to be a regression, but investigation showed interference from leftover Java processes from
+earlier verification runs.
 
 After cleanup, repeated observation showed stable execution with empty stdout/stderr.
 
@@ -921,7 +970,7 @@ Responses were written to files rather than mixed into stdout.
 The wrapper itself exposed several environment-level issues.
 
 | Symptom                                                  | Cause                                       | Resolution                                               |
-| -------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
+|----------------------------------------------------------|---------------------------------------------|----------------------------------------------------------|
 | MCP initialization failure with little diagnostic output | rejected notification plus swallowed output | removed unnecessary notification; routed errors directly |
 | Base64 arguments corrupted                               | command-line quoting/parsing                | read arguments from UTF-8 file                           |
 | Relative paths resolve incorrectly                       | PowerShell working-directory behavior       | resolve from `$PSScriptRoot` / absolute paths            |
@@ -932,7 +981,8 @@ The wrapper itself exposed several environment-level issues.
 | ZIP entries contain backslashes                          | platform-specific archive behavior          | construct ZIP entries directly                           |
 | destructive delete blocked                               | unsafe removal mode                         | use recoverable deletion                                 |
 
-These problems were not part of JVM reverse engineering, but they affected the reliability of the autonomous workflow and are therefore relevant to reproducibility.
+These problems were not part of JVM reverse engineering, but they affected the reliability of the autonomous workflow
+and are therefore relevant to reproducibility.
 
 ---
 
@@ -972,7 +1022,8 @@ reconstruction defect
 → javap + ASM + runtime probe
 ```
 
-A conclusion produced once by one agent or one analysis backend was not considered strong enough for high-impact semantic decisions.
+A conclusion produced once by one agent or one analysis backend was not considered strong enough for high-impact
+semantic decisions.
 
 ---
 
@@ -1020,7 +1071,8 @@ Deliverables should be tested in the form users will receive them.
 
 `patch_catalog` made several limits explicit before patching began.
 
-That prevented later assumptions that Antares Lite could directly rename arbitrary JVM entities or rewrite complete method bodies.
+That prevented later assumptions that Antares Lite could directly rename arbitrary JVM entities or rewrite complete
+method bodies.
 
 Known absence of a capability is preferable to discovering that absence halfway through a transformation.
 
@@ -1030,7 +1082,8 @@ Known absence of a capability is preferable to discovering that absence halfway 
 
 The model made multiple local reasoning errors.
 
-The final deliverable nevertheless converged because those errors were prevented from automatically becoming trusted global facts.
+The final deliverable nevertheless converged because those errors were prevented from automatically becoming trusted
+global facts.
 
 A useful way to summarize the workflow is:
 
@@ -1064,10 +1117,10 @@ That distinction is the central result of this case study.
 
 The two primary public case artifacts are stored under [`case/`](case/):
 
-| File                                                   | Role                                                 |
-| ------------------------------------------------------ | ---------------------------------------------------- |
-| [`case/snake.jar`](case/snake.jar)                     | Exact original obfuscated target used by this report |
-| [`case/snake-deobf-src.zip`](case/snake-deobf-src.zip) | Complete reconstructed source distribution           |
+| File                                                   | Role                                                     |
+|--------------------------------------------------------|----------------------------------------------------------|
+| [`case/snake.jar`](case/snake.jar)                     | Exact original ZKM-obfuscated target used by this report |
+| [`case/snake-deobf-src.zip`](case/snake-deobf-src.zip) | Complete reconstructed source distribution               |
 
 The expected repository layout is:
 
@@ -1088,13 +1141,15 @@ SHA-256:
 d4802826f15cb6dc2d1d73f01b7676779a7f3bde239e723680d8ffebe2cfa4ac
 ```
 
-The archive is retained unmodified so the evidence and reconstructed output can be checked against the exact binary discussed in this report.
+The archive is retained unmodified so the evidence and reconstructed output can be checked against the exact
+ZKM-obfuscated binary discussed in this report.
 
 ### Reconstructed source package
 
 [`case/snake-deobf-src.zip`](case/snake-deobf-src.zip)
 
-The package contains the reconstructed source and its supporting build/report material, including the seven semantic source files:
+The package contains the reconstructed source and its supporting build/report material, including the seven semantic
+source files:
 
 ```text
 snake/
@@ -1259,7 +1314,8 @@ During that main analysis, the original target classes were not loaded or initia
 
 One explicit exception occurred during verification.
 
-To resolve runtime constants and the body-length behavior, the independent verifier instrumented the original classes with ASM in an isolated environment and executed that instrumented copy.
+To resolve runtime constants and the body-length behavior, the independent verifier instrumented the original classes
+with ASM in an isolated environment and executed that instrumented copy.
 
 The measurements included:
 
@@ -1268,7 +1324,8 @@ The measurements included:
 2429
 ```
 
-and the folded constants associated with `GameThread.run`, as well as the observation that the original body length remains constant at 3.
+and the folded constants associated with `GameThread.run`, as well as the observation that the original body length
+remains constant at 3.
 
 Those measurements agreed with the static reconstruction.
 
@@ -1282,7 +1339,7 @@ This report describes **one case study**, not a general benchmark proving univer
 
 Several limitations should be kept explicit.
 
-### Small semantic scope
+### Small program, ZKM25 obfuscation
 
 The archive contains only:
 
@@ -1293,14 +1350,22 @@ The archive contains only:
 6.5 KB
 ```
 
-The control-flow reconstruction is nontrivial, but the total program is small.
+Its semantic program size is therefore small.
 
-Performance on this target should not be extrapolated directly to large applications.
+However, the target is **heavily obfuscated with Zelix KlassMaster (ZKM)**, and the obfuscation intensity is materially
+higher than the program size alone suggests. In particular, conventional decompilers substantially degrade on the
+protected control flow, including a key method that Vineflower could not reconstruct.
+
+Program size and protection difficulty should therefore not be conflated.
+
+The result demonstrates convergence on a small but heavily ZKM-obfuscated target; it should not be extrapolated directly
+to large applications.
 
 ### No universal protector claim
 
 Success here does not establish equivalent performance against arbitrary:
 
+- ZKM configurations or versions;
 - JVM obfuscators;
 - custom virtual machines;
 - native-assisted protections;
@@ -1310,7 +1375,8 @@ Success here does not establish equivalent performance against arbitrary:
 
 ### Finder-zero is tool-relative
 
-A post-rebuild finder count of zero means that Antares Lite's current supported finders reported no matching patterns under complete scans.
+A post-rebuild finder count of zero means that Antares Lite's current supported finders reported no matching patterns
+under complete scans.
 
 It does not prove that no obfuscation of any kind exists under a broader definition.
 
@@ -1326,7 +1392,8 @@ That result is not a formal whole-program semantic-equivalence proof.
 
 The initial reconstruction contained an actual behavioral defect.
 
-Therefore this case should not be interpreted as evidence that a single LLM pass can reliably recover obfuscated JVM semantics.
+Therefore this case should not be interpreted as evidence that a single LLM pass can reliably recover heavily obfuscated
+JVM semantics.
 
 The successful result depended materially on the multi-stage verification workflow.
 
@@ -1376,7 +1443,9 @@ That would be false.
 
 A more accurate summary is:
 
-> **MiniMax M3.1 Flash, operating through Antares Lite's specialist and verification workflow, produced a src-ready reconstruction despite multiple local reasoning failures. Independent evidence and adversarial verification prevented those failures from surviving into the final artifact.**
+> **MiniMax M3.1 Flash, operating through Antares Lite's specialist and verification workflow, produced a src-ready
+reconstruction of a heavily ZKM-obfuscated JVM program despite multiple local reasoning failures. Independent evidence
+and adversarial verification prevented those failures from surviving into the final artifact.**
 
 The model:
 
@@ -1386,11 +1455,12 @@ The model:
 - accepted an incorrect runtime interpretation;
 - produced a reconstruction that compiled and ran but behaved differently.
 
-Yet the system eventually converged because the workflow did not treat any one of those outputs as automatically authoritative.
+Yet the system eventually converged because the workflow did not treat any one of those outputs as automatically
+authoritative.
 
 The complete case can be inspected directly using:
 
-- **Original target:** [`case/snake.jar`](case/snake.jar)
+- **Original ZKM-obfuscated target:** [`case/snake.jar`](case/snake.jar)
 - **Reconstructed source:** [`case/snake-deobf-src.zip`](case/snake-deobf-src.zip)
 
 The case therefore illustrates a distinction that matters for agent-based reverse engineering:
@@ -1401,4 +1471,6 @@ model reliability
 system reliability
 ```
 
-A relatively weak model can still produce a reliable final result when the surrounding workflow constrains claims, preserves evidence provenance, forces independent checks, and treats unexpected behavior as grounds for re-investigation rather than explanation.
+A relatively weak model can still produce a reliable final result when the surrounding workflow constrains claims,
+preserves evidence provenance, forces independent checks, and treats unexpected behavior as grounds for re-investigation
+rather than explanation.

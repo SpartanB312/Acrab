@@ -3,3 +3,4 @@
 gradle/wrapper/gradle-wrapper.jar binary
 *.bat text eol=crlf
 gradlew text eol=lf
+*.sh text eol=lf

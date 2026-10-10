@@ -117,6 +117,13 @@ class ClientIntegrationTests(unittest.TestCase):
             sessions = list(executor.map(exercise, range(3)))
         self.assertEqual(3, len(set(sessions)))
 
+    def test_compiling_finder_clean_mutant_fails_independent_semantic_checks(self):
+        from verify_case import verify
+        report = verify(ROOT / "case/snake.jar", ROOT / "case/snake-deobf-src", self.endpoint)
+        self.assertTrue(report["fixed"]["passed"])
+        self.assertTrue(report["brokenRejected"])
+        self.assertEqual({"fixed": 0, "broken": 0}, report["finderResidue"])
+
     def test_argument_file_outputs_full_json_and_errors_remain_actionable(self):
         args = self.workspace / "arguments.json"
         args.write_text(json.dumps({"unexpected": "\u96ea"}), encoding="utf-8")

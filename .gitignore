@@ -72,5 +72,8 @@ antares-lite-improvements.md
 /scripts/*
 !/scripts/antares_client.py
 !/scripts/test_antares_client.py
+!/scripts/verify_case.py
+!/scripts/package_case.py
+!/scripts/verify_distribution.py
 **/__pycache__/
 *.pyc

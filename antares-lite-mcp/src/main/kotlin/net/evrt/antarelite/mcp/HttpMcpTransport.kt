@@ -94,7 +94,7 @@ class HttpMcpTransport(
 
     private suspend fun handlePost(call: ApplicationCall) {
         val text = call.receiveText()
-        if (text.length > config.maxHttpRequestBytes) {
+        if (text.toByteArray(Charsets.UTF_8).size > config.maxHttpRequestBytes) {
             call.respondJson(
                 HttpStatusCode.PayloadTooLarge,
                 JsonRpc.errorResponse(JsonNull, InvalidRequestErrorCode, "Request body exceeds limit."),
@@ -120,8 +120,19 @@ class HttpMcpTransport(
             )
             return
         }
-        val sessionId = requestedId ?: DEFAULT_SESSION_ID
-        val protocol = sessions.computeIfAbsent(sessionId) { McpProtocol(context) }
+        val sessionId = requestedId ?: if (request.method == "initialize") java.util.UUID.randomUUID().toString() else null
+        if (sessionId == null) {
+            call.respondJson(HttpStatusCode.OK, JsonRpc.errorResponse(request.id, InvalidRequestErrorCode,
+                "Initialize a session and retain its Mcp-Session-Id header."))
+            return
+        }
+        val protocol = if (request.method == "initialize") sessions.computeIfAbsent(sessionId) { McpProtocol(context) }
+            else sessions[sessionId]
+        if (protocol == null) {
+            call.respondJson(HttpStatusCode.NotFound, JsonRpc.errorResponse(request.id, InvalidRequestErrorCode,
+                "Unknown or closed MCP session; initialize a new session."))
+            return
+        }
 
         try {
             val result = protocol.dispatch(request)
@@ -132,9 +143,11 @@ class HttpMcpTransport(
                 call.respondJson(HttpStatusCode.OK, protocol.successResponse(request.id ?: JsonNull, result))
             }
         } catch (failure: JsonRpcException) {
-            call.respondJson(HttpStatusCode.OK, protocol.errorResponse(request.id, failure.code, failure.message ?: "Invalid request."))
+            if (request.isNotification) call.respond(HttpStatusCode.Accepted)
+            else call.respondJson(HttpStatusCode.OK, protocol.errorResponse(request.id, failure.code, failure.message ?: "Invalid request."))
         } catch (failure: Exception) {
-            call.respondJson(HttpStatusCode.OK, protocol.errorResponse(request.id, InternalErrorCode, failure.message ?: "Internal error."))
+            if (request.isNotification) call.respond(HttpStatusCode.Accepted)
+            else call.respondJson(HttpStatusCode.OK, protocol.errorResponse(request.id, InternalErrorCode, failure.message ?: "Internal error."))
         }
     }
 
@@ -151,7 +164,6 @@ class HttpMcpTransport(
 
     private companion object {
         val LOCAL_HOSTS = setOf("127.0.0.1", "::1", "localhost")
-        const val DEFAULT_SESSION_ID = "stateless"
     }
 }
 

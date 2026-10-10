@@ -25,6 +25,33 @@ import kotlin.test.assertTrue
 
 class HttpMcpTransportTest {
     @Test
+    fun `notifications have no response and independently initialized sessions are distinct`() {
+        LiteContext(LiteConfig(workspacePath = createWorkspace(), httpPort = 0)).use { context ->
+            HttpMcpTransport(context, context.config).use { transport ->
+                transport.start()
+                val client = HttpClient.newHttpClient()
+                val endpoint = transport.endpoint
+                fun initialize() = post(client, endpoint, request(1, "initialize",
+                    buildJsonObject { put("protocolVersion", "2025-06-18") })).headers()
+                    .firstValue("Mcp-Session-Id").orElseThrow()
+                val first = initialize()
+                val second = initialize()
+                assertTrue(first != second)
+                val notification = post(client, endpoint, buildJsonObject {
+                    put("jsonrpc", "2.0"); put("method", "notifications/initialized")
+                }, first)
+                assertEquals(202, notification.statusCode())
+                assertTrue(notification.body().isEmpty())
+                val closed = client.send(HttpRequest.newBuilder(URI.create(endpoint)).header("Mcp-Session-Id", first)
+                    .DELETE().build(), HttpResponse.BodyHandlers.ofString())
+                assertEquals(204, closed.statusCode())
+                assertEquals(404, post(client, endpoint, request(2, "tools/list", null), first).statusCode())
+                assertEquals(200, post(client, endpoint, request(2, "tools/list", null), second).statusCode())
+            }
+        }
+    }
+
+    @Test
     fun `http sessions initialize list and call tools`() {
         LiteContext(LiteConfig(workspacePath = createWorkspace(), httpPort = 0)).use { context ->
             context.tools.register(

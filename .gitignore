@@ -69,4 +69,8 @@ tool-verification/
 docs/method-patch-repair-plan.md
 docs/RELIABILITY-REPAIR-PLAN.md
 antares-lite-improvements.md
-/scripts
+/scripts/*
+!/scripts/antares_client.py
+!/scripts/test_antares_client.py
+**/__pycache__/
+*.pyc

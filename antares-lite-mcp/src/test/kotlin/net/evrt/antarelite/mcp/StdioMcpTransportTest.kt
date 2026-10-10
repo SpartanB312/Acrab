@@ -28,6 +28,7 @@ class StdioMcpTransportTest {
         }
         val inputText = listOf(
             line(1, "initialize", buildJsonObject { put("protocolVersion", "2025-06-18") }),
+            """{"jsonrpc":"2.0","method":"notifications/initialized"}""",
             line(2, "tools/list", null),
             line(3, "tools/call", buildJsonObject { put("name", "echo"); put("arguments", buildJsonObject { put("value", "ok") }) }),
             line(4, "ping", JsonObject(emptyMap())),

@@ -17,7 +17,7 @@ import net.evrt.antarelite.core.UnknownToolException
 
 /** One initialized JSON-RPC/MCP session. Transports own their protocol instance. */
 internal class McpProtocol(private val context: LiteContext) {
-    private var initialized = false
+    @Volatile private var initialized = false
 
     private val json = Json {
         encodeDefaults = true
@@ -28,6 +28,10 @@ internal class McpProtocol(private val context: LiteContext) {
 
     fun dispatch(request: JsonRpcRequest): JsonObject = when (request.method) {
         "initialize" -> initialize(request)
+        "notifications/initialized" -> {
+            requireInitialized()
+            JsonObject(emptyMap())
+        }
         "ping" -> JsonObject(emptyMap())
         "tools/list" -> {
             requireInitialized()

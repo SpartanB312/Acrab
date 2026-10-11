@@ -36,10 +36,9 @@ and `recover_strings` check identity and disputed reconstruction claims.
   full-class fallback as such.
 - No source-text checksum is returned. `inputSha256` identifies the archive,
   not an output checksum. Nonblank text and confidence do not prove accuracy.
-- For rebuilt artifacts, compare explicit class/member naming maps, access,
-  inheritance, descriptors and entry point. Compilation, matching structure
-  and finder-zero are independent of behavioral fidelity. Validate loop
-  initialization, condition, decrement and retained elements against bytecode.
+- Check disputed reconstruction claims against the relevant bytecode.
+  Use explicit naming maps when comparison of supplied archives is requested;
+  structural matches do not establish method-body equivalence.
 
 ## Deliverable
 

@@ -1,4 +1,4 @@
-# Antares Lite 1.3.0 Manual
+# Antares Lite 1.3.1 Manual
 
 Antares Lite analyzes JVM JAR archives over MCP and supports guarded method
 patching. It leaves the source archive unchanged. Its five specialist roles
@@ -17,11 +17,12 @@ servers or tool permissions.
 
 The distribution includes this entire manual, [the coordinating skill](../../skills/antares-lite/SKILL.md),
 five specialist skills, seven workflow files, portable intelligence ratings,
-agent templates, the Python HTTP client and
+agent templates and
 [the generated tool catalog](../../catalog/tools-catalog.json). The catalog
 contains actual schemas from the bundled server. A repository checkout generates
 it during distribution tasks; it is not a maintained source JSON file.
 Runtime `tools/list` remains authoritative for the connected server.
+Connect an MCP client directly to the server; no helper script is required.
 
 ## Capabilities and effects
 
@@ -44,9 +45,9 @@ initializers, decoders or bootstrap methods. Static string recovery models
 supported operations as data. Finder results are advisory
 candidates. Decompiled source is reconstruction. The patch verifier's
 `asm-static` checks do not prove runtime linking or intended behavior.
-Contextual argument/field maps are recorded assumptions. Compilation, structural
-comparison, detector coverage and external fixture behavior tests are separate
-checks; none is a substitute for another.
+Contextual argument/field maps are recorded assumptions. Structural comparison,
+detector coverage and static verification have distinct scopes; none establishes
+behavioral equivalence.
 
 ## Supported deployment
 

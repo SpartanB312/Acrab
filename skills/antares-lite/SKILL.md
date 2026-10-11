@@ -1,6 +1,6 @@
 ---
 name: antares-lite
-description: Coordinate JVM JAR analysis and guarded method patching through Antares Lite MCP. Establish source identity, select bounded expert workflows and host-supported models, reconcile evidence, and verify reconstructed or patched artifacts.
+description: Analyze JVM JARs and prepare guarded method patches through Antares Lite MCP. Inspect exact bytecode, triage obfuscation, reconstruct source, and coordinate specialists when the task needs them.
 ---
 
 # Antares Lite
@@ -11,15 +11,19 @@ templates do not register tools or establish a connection. Android/DEX
 analysis is unsupported. A role can be performed locally; this skill does not
 authorize spawning agents.
 
-Read [the coordinator workflow](workflows/coordinator.md) for task decisions
-and [the shared contract](workflows/common.md) for identity and evidence.
-Load only the specialist resources needed for the question. For model
-selection, read [model routing](references/model-routing.md) and its
-[machine-readable ratings](references/model-routing.json).
+For status or tool discovery, call `health` or `tools/list` directly; no project
+or specialist workflow is needed. For domain work, read
+[the shared contract](workflows/common.md) and only the relevant specialist
+resources below. Read [the coordinator workflow](workflows/coordinator.md)
+when work spans roles, evidence conflicts, or a deliverable needs several checks.
+Read [model routing](references/model-routing.md) only when selecting a model
+for authorized delegation; [JSON ratings](references/model-routing.json) are
+for programmatic consumers. Local work inherits the current model.
 
 ## Intelligence requirement
 
-Minimum **4/5**, recommended **4/5**, escalation **5/5** for conflicting
+For substantial coordinator assignments: minimum **4/5**, recommended **4/5**,
+escalation **5/5** for conflicting
 cross-method evidence, irreversible publication or complex reconstruction.
 These are reasoning requirements, not model benchmarks or confidence scores.
 Use the host's supported inventory and preserve explicit user choices.
@@ -36,9 +40,10 @@ Use the host's supported inventory and preserve explicit user choices.
    `health` answers status questions; `list_tools` lists 32 domain tools,
    whereas `tools/list` includes both platform endpoints as well.
 3. Reuse a supplied project after `verify_archive_identity`. For a new archive, import
-   and index through Sirius. Establish `projectId`, archive SHA-256 and
-   a fresh identity check and `archive_summary` before project-dependent analysis. Capability-only
-   questions need no project.
+   and index using the indexing workflow. Establish `projectId`, archive SHA-256
+   and a fresh identity check. Obtain `archive_summary` for inventory questions;
+   reuse an existing summary rather than repeating it for every role.
+   Capability-only questions need no project.
 4. Choose a bounded next action that can resolve the question. Reuse evidence
    only for the same archive, exact scope and relevant tool/backend version.
 
@@ -87,10 +92,7 @@ reconstruction and unknowns. Finder confidence is not a probability; a valid
 preview is not proof of runtime correctness.
 
 Record caller/field assumptions separately from conclusions. Use real operand
-producer sets for branches; adjacency is not provenance. Compare rebuilt
-structure with explicit naming maps. Compilation and zero finder residue are
-separate checks from behavior. External fixture probes require task-specific
-authorization and stay outside these static MCP workflows.
+producer sets for branches; adjacency is not provenance.
 
 Resolve disagreement by checking the same source and descriptor first, then
 bytecode at disputed indexes. Report what met the requested goal, what remains

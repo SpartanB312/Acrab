@@ -1,5 +1,9 @@
 # Intelligence Requirements and Model Routing
 
+Read this reference only when choosing a model for authorized delegation.
+Single-agent and inherited-model work needs no inventory lookup or dispatch
+record. The JSON file is for programmatic routing, not a second required read.
+
 These ratings describe task reasoning demands. They are not measured model
 scores, probabilities, or a license to delegate. The main agent reads the
 host's actual supported inventory before selecting a model. Do not hardcode

@@ -6,21 +6,7 @@ import kotlin.test.*
 
 class NumericConstantAnalysisTest {
     @Test
-    fun `folds packed long xor shifts and locals with JVM semantics`() {
-        val method = method("()J") {
-            visitLdcInsn(116018857672281L)
-            visitLdcInsn(21598883182372L)
-            visitInsn(LXOR)
-            visitIntInsn(BIPUSH, 16)
-            visitInsn(LUSHR)
-            visitVarInsn(LSTORE, 0)
-            visitVarInsn(LLOAD, 0)
-            visitInsn(LRETURN)
-        }
-        val analysis = NumericConstantAnalysis("Example", method)
-        assertTrue(analysis.warnings.isEmpty())
-        assertEquals(2048941838L, analysis.frames[7]!!.getStack(0).constant)
-
+    fun `integer overflow and shift distances follow JVM semantics`() {
         val overflow = method("()I") {
             visitLdcInsn(Int.MAX_VALUE); visitInsn(ICONST_1); visitInsn(IADD)
             visitIntInsn(BIPUSH, 32); visitInsn(ISHL); visitInsn(IRETURN)

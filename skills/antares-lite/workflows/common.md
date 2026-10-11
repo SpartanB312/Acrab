@@ -1,7 +1,8 @@
 # Shared Specialist Contract
 
-This is an agent handoff contract, not an MCP request schema. Pair it with the
-selected specialist skill and workflow. Read their files when accessible;
+These are shared domain rules and an optional agent handoff format, not an MCP
+request schema. Pair them with the selected specialist skill and workflow.
+Local work needs no formal handoff object. Read their files when accessible;
 otherwise the coordinator supplies the text. Do not demand inline copies when
 resources can be read. Obtain inaccessible instructions before domain work
 rather than inventing a substitute workflow.
@@ -46,8 +47,8 @@ initialization, not reuse of a shared stateless session.
   `sha256`; index/summary use `archiveSha256`; finder, decompiler and patch
   use `inputSha256`. Normalize these into handoff `inputSha256` without
   inventing a server field.
-- Establish an initial `archive_summary`; reuse it instead of importing and
-  indexing for every expert. Stored archives and index caches are not live
+- Obtain `archive_summary` when inventory is needed; reuse it instead of
+  importing and indexing for every expert. Stored archives and index caches are not live
   views of externally edited files. Import changed bytes as a new project.
 - Use `verify_archive_identity` to recompute current stored bytes, comparing
   `recordedSha256`, `actualSha256`, `matches` and optional `expectedMatches`.
@@ -85,12 +86,6 @@ maps, originating callsite/write and conditional scope. One observed direct
 callsite does not establish all callers, dynamic dispatch or a global field
 invariant. Producer sets describe actual modeled operands, retaining merge
 alternatives, widths, truncation and unknown values.
-
-Preserve complete response bytes using the file client's evidence export when
-available. Verify request/response IDs, checksums and source metadata before
-reuse. Export checks detect integrity errors, not authenticity or semantic
-correctness. Compilation, structural comparison, finder coverage and bounded
-external behavior checks have separate results; none substitutes for another.
 
 Separate scan coverage, returned payload and investigation coverage. Record
 caps, returned count, total/remaining count, cursor and truncation when exposed;

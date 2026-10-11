@@ -1,6 +1,6 @@
 # Tool Reference
 
-This reference describes the bundled 1.3.0 server. Use runtime `tools/list` or
+This reference describes the bundled 1.3.1 server. Use runtime `tools/list` or
 generated `catalog/tools-catalog.json` for full schemas. There are 32 domain
 tools plus `health` and `list_tools`; registry "analysis tools" include import
 and patching.

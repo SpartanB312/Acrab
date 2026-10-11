@@ -65,11 +65,6 @@ are conditional on supplied assumptions, not all callers or a global invariant.
 Unknown call arguments are absent, not invented. Reference scans do not resolve
 reflection, virtual dispatch, external dependencies or bootstrap execution.
 
-For loops, check initialization, counter test, decrement and side-effect edges
-separately. Trace consecutive branches individually; the nearest instruction
-is not necessarily either branch's consumed producer. Retain differences
-between arbitrary long-key arguments and the observed game-loop argument.
-
 For static strings, require supported recovery status and inspect ordered
 cyclic keys, returned literals, source indexes and diagnostics. Unsupported
 patterns remain unknown and never trigger target initializer/decoder execution.

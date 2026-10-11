@@ -93,31 +93,6 @@ recompute current stored bytes. Require `matches` and, if supplied,
 Names alone are insufficient. Do not edit files in the server workspace;
 import changed bytes as a new project.
 
-## Use the file-based HTTP client
-
-Python 3.11 or newer is needed only for the bundled helper scripts. From the
-distribution root, with the HTTP server running:
-
-```sh
-python scripts/antares_client.py --list --output tools.json
-python scripts/antares_client.py --archive example.jar --evidence-dir evidence --output imported.json
-python scripts/antares_client.py --tool method_bytecode --arguments-file method.json --output method-response.json
-```
-
-`method.json` contains one UTF-8 JSON **arguments object**, for example:
-
-```json
-{"projectId":"<projectId>","className":"example.Guard","methodName":"check","methodDescriptor":"(I)Z"}
-```
-
-The client initializes, sends the notification, retains/closes its session and
-writes the complete response. Imports compare local bytes, returned hash and
-fresh server identity. Use `--expected-sha256` to enforce a known input and
-`--endpoint` for another server. Each `--evidence-dir` run creates a distinct
-export directory. Verify that directory with `--verify-evidence`; the checks
-detect altered records, not semantic correctness or author authenticity.
-See [analysis and verification](ANALYSIS-AND-VERIFICATION.md).
-
 ## Locate an exact method
 
 Use `list_classes` or `search_classes` to locate the class, then

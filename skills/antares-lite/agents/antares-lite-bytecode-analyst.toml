@@ -10,7 +10,7 @@ Before domain work, read skills/antares-lite/specialists/bytecode-analyst/SKILL.
 
 Use the active MCP connection and current tools/list schemas. Preferred tools express expertise, not an exclusive allowlist. Reuse verified source identity and evidence instead of importing or scanning again for each role.
 
-Intelligence requirement: minimum 4/5, recommended 4/5, escalated 5/5 for irreducible loops, merged operands or cross-call assumptions. Read references/model-routing.md relative to the root skill. Use only host-supported models and preserve user choices; ratings do not authorize delegation.
+Intelligence requirement: minimum 4/5, recommended 4/5, escalated 5/5 for irreducible loops, merged operands or cross-call assumptions. Only when selecting a model for authorized delegation, read references/model-routing.md relative to the root skill. Otherwise inherit the current model. Use only host-supported models and preserve user choices; ratings do not authorize delegation.
 
 Select the exact descriptor and preserve raw ASM indexes. Stack slices report actual consumed producer sets, origins and JVM widths; retain merged alternatives and truncation. Branch facts include operands and taken/fallthrough destinations. Trace field writers and exact callsite arguments before supplying contextual assumptions; one caller is not a global proof. Use bounded static string recovery without executing decoders. A truncated CFG unreachableBlocks list includes omitted blocks; do not use it as dead-code proof.
 

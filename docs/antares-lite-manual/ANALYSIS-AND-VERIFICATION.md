@@ -1,9 +1,8 @@
 # Context and Independent Verification
 
-Antares Lite 1.3.0 adds fresh byte identity, actual operand provenance, direct
+Antares Lite 1.3 adds fresh byte identity, actual operand provenance, direct
 reference queries, one-callsite context, bounded static strings and structural
-comparison. The server remains static. External fixture tests are separate
-repository tools, not target-execution endpoints.
+comparison. These are static capabilities; the server does not execute targets.
 
 ## Identity and evidence
 
@@ -13,14 +12,6 @@ Record the local SHA-256, import's `sha256` and a fresh
 Index reuse rejects changed stored bytes. Import changed inputs as new projects.
 Method evidence includes `inputSha256` and `analysisVersion`; retain these with
 the exact class/method/descriptor, raw ASM indexes and complete arguments.
-
-The stdlib Python client supports UTF-8 argument files, complete response files
-and `--evidence-dir`. Each run exports original requests/responses and a manifest
-under a distinct directory. `--verify-evidence <export-directory>` checks file
-hashes, path containment, response IDs and recorded source metadata. Exports
-preserve full requests, including archive bytes on import. These integrity
-checks do not authenticate a writer who can recompute the manifest or prove
-that a claim about the program is true.
 
 ## Explain an actual branch
 
@@ -37,11 +28,6 @@ describe normal-flow arithmetic; unknown inputs and conflicting merges remain
 unknown. Truncated CFG reachability cannot establish that omitted blocks are
 dead. Reference sites and raw ASM positions are static evidence.
 
-The public fixture's `e.e(J)V` branch at index 73 consumes the load at index 68,
-local 4, and jumps to label index 86. It tests the trim counter. A nearby
-`GETSTATIC` is not that branch's input. The decrement and removal paths must be
-checked separately to reconstruct the loop correctly.
-
 ## Supply a bounded context
 
 Page `method_references` for exact callers and `field_references` for all indexed
@@ -54,11 +40,11 @@ Example arguments for a callee analysis:
 ```json
 {
   "projectId": "<projectId>",
-  "className": "f",
+  "className": "example.Worker",
   "methodName": "<init>",
   "methodDescriptor": "(JC)V",
-  "argumentValues": {"1": "2429"},
-  "fieldValues": {"e.h:Z": "0"}
+  "argumentValues": {"1": "65"},
+  "fieldValues": {"example/Flags.enabled:Z": "0"}
 }
 ```
 
@@ -69,62 +55,32 @@ values. Maps are fixed assumptions, echoed under conditional scope; they do
 not prove field writes or an invariant over every call. Record where each
 value came from, including the caller descriptor/index or inspected writer.
 
-For `case/snake.jar`, the observed constructor char is 2429. This context
-supports the inspected false guard write; it does not justify declaring the
-field unassigned or constant under arbitrary constructor arguments.
-
 ## Recover strings and compare structure
 
 `recover_strings` models supported cyclic-XOR initializers without loading
 target code. Require `status: recovered`, retain ordered keys (including repeated
 positions), literals, source indexes and diagnostics. Unsupported/budget-exceeding
-patterns return a gap. The fixture recovers `Snake`, `COLISION! \n` and `Yummy!`,
-preserving the original misspelling and newline.
+patterns return a gap. Preserve exact literal spelling and whitespace rather
+than normalizing recovered text.
 
-Import a rebuilt archive separately and use `compare_structure` with explicit
-maps. Example mapping objects:
+For a requested comparison, import the second supplied archive separately and
+use `compare_structure` with explicit maps. Example mapping objects:
 
 ```json
 {
-  "classNames": {"c": "snake.Snake", "e": "snake.GameThread"},
-  "memberNames": {"e#e(J)V": "trimBodySegments", "e#c:I": "score"}
+  "classNames": {"legacy.Record": "example.Record"},
+  "memberNames": {"legacy.Record#a()I": "value", "legacy.Record#b:I": "count"}
 }
 ```
 
 Use verified source member names/descriptors; this illustrates the input format,
-not a complete fixture mapping. Signatures are remapped through class names.
+not a mapping for any particular archive. Signatures are remapped through class names.
 Class/member access, inheritance, descriptors and manifest Main-Class are
 compared. Bodies, resource behavior and runtime equivalence are outside this
 check. An intentional removal or signature change remains a difference.
 
-## Validate artifacts independently
+## Interpret verification limits
 
-Run these from a repository checkout with JDK 21 and Python 3.11 or newer:
-
-```sh
-python -m unittest discover -s scripts -p test_antares_client.py -v
-python scripts/verify_case.py --report build/reports/case-differential.json
-python scripts/verify_case.py --endpoint http://127.0.0.1:8080/mcp --report build/reports/case-with-finders.json
-python scripts/package_case.py
-python scripts/verify_distribution.py --version 1.3.0 --report build/reports/distribution.json
-```
-
-Build `installDist`, `distZip` and `distTar` before distribution verification.
-The verifier cleanly extracts both archives, compares resources, starts their
-actual launchers, checks MCP lifecycle/catalog/schema/version, then builds the
-source ZIP through its packaged script and compares seven class files against
-a clean source-tree build using the same JDK. These helper checks need a
-checkout; only the reusable HTTP client is included in server distributions.
-
-The external `CaseProbe` uses the exact known fixture and reconstructed archive
-in a separate headless JVM. It avoids game constructors/thread/window startup
-and compares 36 trim and 16 direction cases. Inputs include the recorded positive
-key `41896598891982` and explicitly false guards. It compares retained
-coordinates, not just length. A deliberate no-op counter variant still compiles
-and has zero finder candidates, but must fail the probe. The scripts bound
-subprocess duration and verify fixture bytes before running them.
-
-Report each check separately: identity, compilation, structural differences,
-finder scan/payload coverage, static verifier and external behavioral cases.
-The probe establishes only those bounded inputs, not random food behavior,
-arbitrary keys/guard states, environment changes or whole-program equivalence.
+Report archive identity, structural differences, finder coverage and static
+verifier results separately when relevant to the task. These checks do not
+establish runtime linking or behavioral equivalence.

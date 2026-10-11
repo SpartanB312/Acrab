@@ -64,10 +64,6 @@ distributions {
                 into("skills/antares-lite")
                 include(packagedSkillFiles)
             }
-            from(rootProject.layout.projectDirectory.dir("scripts")) {
-                into("scripts")
-                include("antares_client.py", "README.md")
-            }
         }
     }
 }

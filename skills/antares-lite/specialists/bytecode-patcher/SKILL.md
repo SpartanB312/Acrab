@@ -20,7 +20,7 @@ does not authorize apply or substitute for preview/postchecks.
 
 `patch_catalog`, `method_patch_draft`, `method_patch_preview`,
 `apply_method_patch`; `verify_archive_identity`, `method_bytecode` and
-`compare_structure` supply identity, anchors and output checks.
+`index_archive` supply identity, anchors and output checks.
 
 ## Gates that matter
 
@@ -40,9 +40,9 @@ does not authorize apply or substitute for preview/postchecks.
 - Check output artifact/project and `verified`; record the raw `reindexed`
   flag and index the output explicitly when false. Check the requested change
   and reset instruction indexes for the new source.
-- Recompute output identity. Record unexpected structural changes and keep
-  any branch-removal claim conditional on its explicit caller/field assumptions.
-  Static verification and finder-zero do not establish intended behavior.
+- Recompute output identity and keep any branch-removal claim conditional on
+  its explicit caller/field assumptions.
+  Static verification does not establish intended behavior.
 
 ## Boundaries
 

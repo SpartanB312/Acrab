@@ -72,9 +72,9 @@ Invokedynamic bootstrap metadata is not a resolved runtime call target;
 ordinary lambdas and string concatenation also use it. Do not execute
 transforms or bootstrap methods.
 
-For a supported cyclic-XOR initializer, call `recover_strings` rather than
-reimplementing or executing a decoder. Record recovery status, ordered key
-positions (including duplicate key values), plaintext and source indexes.
+When plaintext recovery is requested for a supported cyclic-XOR initializer,
+call `recover_strings` rather than reimplementing or executing a decoder.
+Record recovery status, ordered key positions, plaintext and source indexes.
 Unsupported recovery is an explicit gap, not permission to guess strings.
 For a static guard hypothesis, enumerate `field_references` writes and direct
 caller contexts; do not call the field globally constant from one entry path.
@@ -86,6 +86,3 @@ reporting global totals and gaps. For exhaustive review, both collection and
 requested investigation must be complete; a finished scan alone is insufficient.
 Zero findings means no supported detector emitted a signal in that scope,
 not proof of unobfuscated or harmless input.
-For rebuilt source, detector-zero also does not establish equivalent behavior.
-Record it as detector coverage alongside independent compilation, structural
-and any separately authorized external semantic checks.

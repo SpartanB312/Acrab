@@ -183,8 +183,7 @@ class EvidenceFinderService(
     /**
      * Detect a local string cipher: a `TABLESWITCH` selecting integer constant keys that feed
      * `IXOR`, in a method that also rebuilds a string through `String.<init>([C)` or `intern()`.
-     * This shape is far more reliable than scanning for ciphertext, which the previous
-     * implementation missed entirely on the reference fixture.
+     * Detect the decoding structure rather than relying on ciphertext appearance.
      */
     private fun stringCipherFinding(
         index: ProjectIndex,

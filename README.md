@@ -27,16 +27,14 @@ checks pass.
   preview.
 - **Agent-ready:** ships a main-agent skill, five specialist roles, portable
   intelligence requirements, model routing guidance and agent templates.
-- **Reproducible evidence:** includes a stdlib Python HTTP client with UTF-8
-  argument files, full response output and evidence exports with integrity checks.
+- **Reproducible evidence:** binds method evidence to source hashes and records
+  assumptions, analysis versions, and coverage limits.
 
 ## Requirements
 
 - JDK 21 or newer
 - A Git checkout with the bundled Gradle wrapper
 - An MCP client for stdio, or any JSON-capable HTTP client for HTTP transport
-
-Python 3.11 or newer is optional for the bundled client and repository checks.
 
 ## Quick Start
 
@@ -98,17 +96,8 @@ server does not use SSE. Initialization returns a unique `Mcp-Session-Id`;
 retain it on every later request. Send `notifications/initialized` after
 initialization (HTTP 202, no body). Close sessions with `DELETE /mcp`.
 
-The bundled file client handles this lifecycle and preserves full responses:
-
-```sh
-python scripts/antares_client.py --list --output tools.json
-python scripts/antares_client.py --archive example.jar --evidence-dir evidence --output imported.json
-python scripts/antares_client.py --tool method_bytecode --arguments-file method.json --output bytecode.json
-```
-
-Use UTF-8 JSON arguments from the live schema in `method.json`. The client
-checks imported identity against local bytes and supports `--expected-sha256`.
-See the [quickstart](docs/antares-lite-manual/USER-QUICKSTART.md) for complete examples.
+Connect your MCP client directly to this endpoint. See the
+[quickstart](docs/antares-lite-manual/USER-QUICKSTART.md) for complete examples.
 
 ### First Analysis Steps
 
@@ -286,16 +275,11 @@ Create installable and distributable artifacts:
 
 Distribution archives are written to
 `antares-lite-app/build/distributions/`. The current release version is
-**1.3.0**. ZIP/TAR packages include the manual, skills, model routing references,
-generated catalog, license and reusable HTTP client.
+**1.3.1**. ZIP/TAR packages include the manual, skills, model routing references,
+generated catalog and license.
 
-The [public case source ZIP](case/snake-deobf-src.zip) contains build scripts,
-seven Java classes and a bounded external probe. Repository checks verify clean
-extraction and launcher/resource parity, then compare 36 trim and 16 direction
-cases against the original fixture. A deliberately incorrect but compiling,
-finder-clean trim variant must fail that probe. These are bounded regression
-checks, not whole-program equivalence. See the
-[verification guide](docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md) for commands.
+For release verification, check clean archive extraction, launcher lifecycle,
+runtime version, catalog schemas and packaged-resource parity separately.
 
 ## License
 

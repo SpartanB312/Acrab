@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "net.evrt.antarelite"
-version = "1.3.0"
+version = "1.3.1"
 
 subprojects {
     group = rootProject.group

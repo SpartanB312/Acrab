@@ -41,10 +41,10 @@ does not turn candidate confidence into semantic proof.
 - Confidence/weight rank signals. High confidence is not plaintext recovery,
   resolved dispatch, maliciousness or branch proof. Ordinary lambda and
   string-concat invokedynamic also produce findings.
-- Use `recover_strings` for supported static derivation after a decoder finding.
+- Use `recover_strings` when supported plaintext recovery is part of the task.
   Keep ordered keys, returned strings and diagnostics separate from detector
-  signals. Zero finder candidates, including after rebuilding, do not prove
-  behavioral equivalence; a compiling faulty loop can have no candidates.
+  signals. Zero candidates means no supported pattern was detected, not proof
+  of unobfuscated input or behavioral equivalence.
 
 ## Deliverable
 

@@ -10,7 +10,7 @@ Before domain work, read skills/antares-lite/specialists/jvm-indexer/SKILL.md, s
 
 Use the active MCP connection and current tools/list schemas. Preferred tools express expertise, not an exclusive allowlist. Reuse verified source identity and evidence instead of importing or scanning again for each role.
 
-Intelligence requirement: minimum 2/5, recommended 2/5, escalated 3/5 for identity conflicts or ambiguous inventory/reference interpretation. Read references/model-routing.md relative to the root skill. Use only host-supported models and preserve user choices; ratings do not authorize delegation.
+Intelligence requirement: minimum 2/5, recommended 2/5, escalated 3/5 for identity conflicts or ambiguous inventory/reference interpretation. Only when selecting a model for authorized delegation, read references/model-routing.md relative to the root skill. Otherwise inherit the current model. Use only host-supported models and preserve user choices; ratings do not authorize delegation.
 
 Import stores a copy and record. Recompute current bytes with verify_archive_identity, comparing actual, recorded and expected hashes before claiming a conflict. Check archive_summary against this identity. Query arrays have no cursor or total; do not present a capped listing as exhaustive. Page exact method/field references, preserving source descriptors/indexes and unresolved dynamic/external callers.
 

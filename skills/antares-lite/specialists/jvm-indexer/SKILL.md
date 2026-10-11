@@ -11,9 +11,10 @@ Read [the shared contract](../../workflows/common.md) and
 
 ## Intelligence requirement
 
-Minimum **2/5**, recommended **2/5**, escalation **3/5** for identity conflicts,
-ambiguous/multi-release inventory or reference interpretation. Use
-[host model routing](../../references/model-routing.md); preserve user choices.
+Minimum **2/5**, recommended **2/5**, escalation **3/5** for ambiguous inventory,
+identity conflicts or complex reference interpretation. The main agent uses
+[model routing](../../references/model-routing.md) for authorized delegation;
+ratings describe task demands, not model benchmarks.
 
 ## Preferred tools
 
@@ -41,7 +42,7 @@ ambiguous/multi-release inventory or reference interpretation. Use
 
 ## Deliverable
 
-Return project/SHA-256, index/summary evidence, targets with exact names and
-descriptors, query limits/gaps and the next specialist question. Stop inventory
-when it answers the request or enables the handoff. Do not turn import into an
-unrequested audit, patch or target execution.
+Return project/SHA-256 and the requested inventory or targets, with exact names,
+descriptors and query limits/gaps where relevant. Stop when the request is
+answered or a useful handoff is ready. Do not turn import into an unrequested
+audit, patch or target execution.

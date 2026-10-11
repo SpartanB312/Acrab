@@ -14,19 +14,20 @@ authorize spawning agents.
 For status or tool discovery, call `health` or `tools/list` directly; no project
 or specialist workflow is needed. For domain work, read
 [the shared contract](workflows/common.md) and only the relevant specialist
-resources below. Read [the coordinator workflow](workflows/coordinator.md)
-when work spans roles, evidence conflicts, or a deliverable needs several checks.
-Read [model routing](references/model-routing.md) only when selecting a model
-for authorized delegation; [JSON ratings](references/model-routing.json) are
-for programmatic consumers. Local work inherits the current model.
+resources below. Roles organize expertise, not a mandatory pipeline. Choose
+tools and checks for the requested result; a lookup or reconstruction does not
+imply an archive audit or patch. Local work uses the current model.
+
+Read [model routing](references/model-routing.md) when selecting a model for
+authorized delegation. [JSON requirements](references/model-routing.json) are
+for programmatic consumers, not a second required read.
 
 ## Intelligence requirement
 
-For substantial coordinator assignments: minimum **4/5**, recommended **4/5**,
-escalation **5/5** for conflicting
-cross-method evidence, irreversible publication or complex reconstruction.
-These are reasoning requirements, not model benchmarks or confidence scores.
-Use the host's supported inventory and preserve explicit user choices.
+For substantial coordination: minimum **4/5**, recommended **4/5**, escalation
+**5/5** for complex cross-role reasoning or conflicting evidence. These are
+task requirements, not measured model scores. Preserve user model and effort
+choices; a stronger model does not supply missing evidence.
 
 ## Establish the task
 
@@ -57,19 +58,20 @@ Use the host's supported inventory and preserve explicit user choices.
 | Vega | `antares-lite-decompiler` | Obtain or compare reconstructed text | [skill](specialists/decompiler/SKILL.md), [workflow](workflows/decompiler.md) |
 | Altair | `antares-lite-bytecode-patcher` | Draft, review a preview or publish a patch | [skill](specialists/bytecode-patcher/SKILL.md), [workflow](workflows/bytecode-patcher.md) |
 
-Prefer configured specialists for substantial domain work when delegation is
-available and authorized. Supply the selected skill, its workflow and shared
+Perform a role locally or delegate when authorized and useful. Supply the
+selected skill, its workflow and shared
 contract as readable resources or inline text. A path is sufficient only when
 the receiving agent can read it. If delegation is unavailable, perform the
 same workflow directly; do not block an otherwise answerable request.
-An explicit single-agent request stays local. Choose a model only after
-delegation is authorized, and only from models actually supported by the host.
+Preserve user choices for agents, models and reasoning effort. An explicit
+single-agent request stays local. Use only host-supported settings when a
+delegated task needs model selection.
 
-After Sirius establishes identity, independent Mira and Vega questions may run
-in parallel. Rigel validates specific candidate or reconstruction claims.
-Altair depends on source anchors and a concrete change; patches on the same
-source do not compose automatically. Keep user communication, scope and final
-synthesis with the coordinator.
+After identity is established, independent authorized work may run in parallel.
+Cross-check a candidate or reconstruction only when the requested conclusion
+depends on it. Altair needs source anchors and a concrete change; patches on
+the same source do not compose automatically. Keep user communication, scope
+and final synthesis with the main agent.
 
 ## Tool effects and boundaries
 

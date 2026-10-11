@@ -27,47 +27,38 @@ cannot select one.
      relevant, `argumentSlots` for actual consumed operands;
    - `cfg_constant_propagation` for block/branch operands and destinations;
    - `method_references`, `field_references` and `method_call_context` for
-     indexed callers, guard writers and one observed callsite;
-   - `recover_strings` for supported cyclic-XOR initializers;
+     questions that depend on indexed callers, field access or a callsite;
+   - `recover_strings` when supported static string recovery is requested;
    - an existing finder record or reconstructed excerpt for a cross-check.
 4. **Check bounds.** Bytecode caps executable output at 500; CFG/constant
    blocks cap at 100. Inspect `truncated`; there is no paging parameter.
    Under truncated CFG output, some `unreachableBlocks` are omitted blocks
    and edges can point outside the returned block set. Do not classify these
    as proven dead code.
-5. **Evaluate the claim.** Link each assertion to actual consumed values and
-   destinations, preserving `producerInstructionIndexes`, origins, parameter
-   locals and JVM widths. Operands are bottom-to-top; a singular producer is
-   supplied only when unique. Check `analysisStatus`, provenance truncation
-   and warnings. Numeric facts expose `taken`, `not-taken` or `unknown`, the
-   condition expression, operands, target/fallthrough indexes and unknown reason.
-   Unknown inputs and conflicting merges remain unknown. An unknown result
-   cannot authorize branch removal; normal-flow facts do not prove that throwing
-   operations complete.
+5. **Evaluate the claim.** Base the requested conclusion on the selected
+   evidence. For operand analysis, preserve producer sets, origins, parameter
+   locals, JVM widths and merged alternatives. For numeric branch analysis,
+   inspect the condition, operands, taken/fallthrough destinations and unknown
+   reason. Check status, warnings and truncation. Unknown inputs and conflicting
+   merges remain unknown; an unknown result cannot justify branch removal.
+   Normal-flow facts do not prove that throwing operations complete.
 6. **Return or hand off.** Report the observed condition/call/constant, the
-   model's bounds and unresolved assumptions. Give Vega a disputed bytecode
-   excerpt or Altair an observed source anchor plus the intended change.
+   model's bounds and unresolved assumptions. Any follow-up should carry the
+   exact excerpt or observed source anchor and the remaining question.
 
 ## Conflicting and missing evidence
 
 Check project/checksum and descriptors before comparing expert output.
-A decompiled loop or condition is reconstruction; use its exact disputed
-operation to locate source bytecode. Agreement between two decompilers still
+Decompiled source is reconstruction; inspect the relevant bytecode when a
+semantic conclusion or disputed claim needs it. Agreement between decompilers
 does not establish runtime behavior.
 
-For an argument-dependent guard, page exact method callers, locate the direct
-invocation and use `method_call_context`. Its `calleeArgumentValues` can become
-`cfg_constant_propagation.argumentValues` in the callee. Keys are zero-based
-formal argument ordinals, excluding `this`, not JVM local slots. Values are
-numeric strings. Field assumptions use internal `owner/name.field:descriptor`
-keys with string values. Record the source callsite/write and maps; results
-are conditional on supplied assumptions, not all callers or a global invariant.
-Unknown call arguments are absent, not invented. Reference scans do not resolve
-reflection, virtual dispatch, external dependencies or bootstrap execution.
-
-For static strings, require supported recovery status and inspect ordered
-cyclic keys, returned literals, source indexes and diagnostics. Unsupported
-patterns remain unknown and never trigger target initializer/decoder execution.
+Investigate callers or field state only when the requested claim depends on
+them. Supplied argument/field values are conditional assumptions: record their
+source and scope, or leave them unknown. One indexed site does not establish
+all callers or a global invariant; reference scans do not resolve reflection,
+virtual dispatch or external dependencies. Tool-specific binding and recovery
+details are in the [analysis reference](../../../docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md).
 
 An abstract/native method can have no body; report that fact rather than
 inventing a CFG. If a required anchor is beyond the listing cap, do not count

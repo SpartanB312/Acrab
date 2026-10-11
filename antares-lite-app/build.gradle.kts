@@ -28,7 +28,6 @@ val packagedSkillFiles = listOf(
     "specialists/evidence-finder/**",
     "specialists/jvm-indexer/**",
     "agents/openai.yaml",
-    "agents/antares-lite-coordinator.toml",
     "agents/antares-lite-bytecode-analyst.toml",
     "agents/antares-lite-bytecode-patcher.toml",
     "agents/antares-lite-decompiler.toml",

@@ -11,10 +11,10 @@ Read [the shared contract](../../workflows/common.md) and
 
 ## Intelligence requirement
 
-Minimum **3/5**, recommended **3/5**, escalation **4/5** for cursor/overload
-collisions or combined guard/decoder hypotheses. Use
-[host model routing](../../references/model-routing.md). Stronger reasoning
-does not turn candidate confidence into semantic proof.
+Minimum **3/5**, recommended **3/5**, escalation **4/5** for interacting candidate
+signals or complex coverage accounting. The main agent uses
+[model routing](../../references/model-routing.md) for authorized delegation;
+ratings do not turn candidate confidence into semantic proof.
 
 ## Preferred tools
 
@@ -49,6 +49,7 @@ does not turn candidate confidence into semantic proof.
 ## Deliverable
 
 Return category coverage, scanned/returned/reviewed counts, finding records and
-a bounded Rigel shortlist. A top-N task can complete with explicit bounds;
-an exhaustive task cannot while requested results are uncollected or unreviewed.
-Do not execute decoders or apply patches during triage.
+any methods that need further review for the requested conclusion. A top-N task
+can complete with explicit bounds; an exhaustive task cannot while requested
+results are uncollected or unreviewed. Do not execute decoders or apply patches
+during triage.

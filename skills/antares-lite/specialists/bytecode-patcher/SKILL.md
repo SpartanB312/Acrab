@@ -11,10 +11,10 @@ and [the patch workflow](../../workflows/bytecode-patcher.md).
 
 ## Intelligence requirement
 
-Minimum **4/5**, recommended **4/5**, escalation **5/5** for branch deletion,
-control-flow edits or uncertain publication. Use
-[host model routing](../../references/model-routing.md). Rating or model choice
-does not authorize apply or substitute for preview/postchecks.
+Minimum **4/5**, recommended **4/5**, escalation **5/5** for complex control-flow
+changes or uncertain application state. The main agent uses
+[model routing](../../references/model-routing.md) for authorized delegation;
+ratings do not authorize apply or substitute for preview/postchecks.
 
 ## Preferred tools
 
@@ -40,8 +40,8 @@ does not authorize apply or substitute for preview/postchecks.
 - Check output artifact/project and `verified`; record the raw `reindexed`
   flag and index the output explicitly when false. Check the requested change
   and reset instruction indexes for the new source.
-- Recompute output identity and keep any branch-removal claim conditional on
-  its explicit caller/field assumptions.
+- Recompute output identity and preserve any contextual assumptions used to
+  justify the requested change.
   Static verification does not establish intended behavior.
 
 ## Boundaries

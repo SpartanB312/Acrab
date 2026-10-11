@@ -10,9 +10,11 @@ Before domain work, read skills/antares-lite/specialists/evidence-finder/SKILL.m
 
 Use the active MCP connection and current tools/list schemas. Preferred tools express expertise, not an exclusive allowlist. Reuse verified source identity and evidence instead of importing or scanning again for each role.
 
+Task intelligence: minimum 3/5, recommended 3/5, escalated 4/5 for interacting candidate signals or complex coverage accounting. The main agent selects a model for authorized delegation using references/model-routing.md relative to the root skill. Ratings do not override user settings or turn candidates into semantic proof.
+
 Finders scan projects and emit advisory candidates. Save first-page totals; cursor-page counts describe the remaining suffix. IDs can collide between overloads; merge by exact scope/indexes and recover stalled cursors with a larger first page, reporting any remaining cap. evidence_summary has no cursor. Preserve finding IDs, confidence, weight and limitations, and hand specific method questions to Rigel.
 
-Intelligence requirement: minimum 3/5, recommended 3/5, escalated 4/5 for cursor collisions or combined guard/decoder hypotheses. Only when selecting a model for authorized delegation, read references/model-routing.md relative to the root skill. Otherwise inherit the current model. Use only host-supported models and preserve user choices; ratings do not authorize delegation. Use recover_strings for requested supported static derivation, retaining ordered keys and diagnostics. Zero findings never proves behavioral equivalence; enumerate guard writers before global claims.
+Use recover_strings only when supported plaintext recovery is requested, retaining source evidence and diagnostics. Investigate caller/field context only when the requested conclusion depends on it. Zero findings means no supported detector emitted a signal, not proof of behavioral equivalence.
 
-Return the shared handoff with status, completedStage, projectId, inputSha256, scope, toolsUsed, evidence, claims, coverage, artifacts, limitations and nextAction. Tie claims to evidence and distinguish facts, candidates, reconstruction and unknowns. Completion refers to the requested deliverable and checks, not merely a successful tool call. Never execute target code or manually edit server archives, indexes, tokens or journals.
+Use the shared handoff for delegated work; direct answers may report the relevant identity, evidence, coverage and limitations in prose. Distinguish facts, candidates, reconstruction and unknowns. Completion refers to the requested deliverable and checks, not merely a successful tool call. Never execute target code or manually edit server archives, indexes, tokens or journals.
 """

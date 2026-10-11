@@ -7,14 +7,11 @@ scope and final synthesis.
 
 ## Resources and configuration
 
-The root skill is the main-agent entrypoint, with a dedicated
-[coordinator workflow](../../skills/antares-lite/workflows/coordinator.md).
-It owns source identity, evidence reconciliation and task scope when work needs
-coordination. Status and tool discovery can call
-`health` or `tools/list` directly. Simple domain requests load only the relevant
-role and shared rules; no coordinator workflow or formal handoff is required.
-Single-agent requests
-perform those workflows locally without spawning specialists.
+The root skill is the main-agent entrypoint. It handles scope, source identity
+and final synthesis without a separate coordinator configuration. Status and
+tool discovery can call `health` or `tools/list` directly. Domain requests load
+only the relevant role and shared rules. Single-agent requests perform those
+workflows locally without a formal handoff or spawning specialists.
 
 Keep the [skill tree](../../skills/antares-lite/SKILL.md) together. Each role
 loads its skill, dedicated workflow and
@@ -42,8 +39,9 @@ same workflow directly.
 
 ## Intelligence and model selection
 
-Every role has minimum, recommended and escalation intelligence requirements
-on a 1-5 task scale. These are reasoning demands, not measured model scores.
+The main agent selects a model using the role's reasoning requirements and the
+actual assignment. Ratings are task demands on a 1-5 scale, not measured model
+scores. Retrieval, analysis and mutation can require different capabilities.
 
 | Role | Minimum | Recommended | Escalated |
 | --- | --- | --- | --- |
@@ -55,25 +53,28 @@ on a 1-5 task scale. These are reasoning demands, not measured model scores.
 | Altair | 4 | 4 | 5 |
 
 For authorized delegation that needs model selection, use
-[routing guidance](../../skills/antares-lite/references/model-routing.md)
-against the host's actual supported model inventory.
-[Portable JSON ratings](../../skills/antares-lite/references/model-routing.json)
-support programmatic consumers; reading both formats is unnecessary. Local or
-inherited-model work needs no inventory lookup or dispatch record. Preserve user model and
-effort choices. Require a trusted capability assessment or record inherited
-unassessed fit; do not infer capability from a model name. Difficult loops,
-cross-call assumptions, backend contradictions and control-flow patches trigger
-escalation. Ratings never authorize delegation or supply missing evidence.
+[routing guidance](../../skills/antares-lite/references/model-routing.md) and
+the host's supported inventory and capability assessments.
+[JSON requirements](../../skills/antares-lite/references/model-routing.json)
+support programmatic consumers. Preserve user model and effort choices; local
+or inherited-model work needs no additional lookup. Increased reasoning
+complexity can trigger escalation, but missing evidence remains a limitation.
+Ratings never authorize delegation or expand the task.
 
 ## Task decomposition
 
-Start with the user's question, not a checklist that runs every tool.
+Start with the user's question, not a checklist that runs every tool. The
+examples below are choices, not required stages. Caller/field investigation,
+string recovery, backend comparison and structural comparison apply only when
+the requested result needs them. Source retrieval and bounded triage can finish
+without these extra checks. Preserve user model and effort choices; delegation
+uses the host's supported settings and requires authorization.
 
 | Request | First useful work | Dependent check | Completion evidence |
 | --- | --- | --- | --- |
 | New JAR and class lookup | Sirius imports/indexes and queries | Domain expert only if needed | Verified identity, summary and bounded targets |
 | Explain a method/branch | Rigel resolves descriptor and inspects bytecode | CFG or adjacent claim check | Indexed observations and explicit unknowns |
-| Trace argument/guard context | Rigel queries exact references and one callsite | Inspect all indexed writers, preserve assumptions | Actual producers, argument maps and conditional scope |
+| Trace caller or field context | Rigel queries the relevant references or callsite | Inspect sites needed for the requested scope; preserve assumptions | Source sites, contextual values and explicit limits |
 | Find suspicious transforms | Mira chooses categories and coverage | Rigel checks selected findings | Scan/payload/review counts and candidate provenance |
 | Reconstruct source | Vega selects backend and exact scope | Rigel for disputed semantics | Source, backend/version, extraction/failure caveats |
 | Compare supplied archives | Sirius verifies both identities; Vega/Rigel compare structure | Explicit naming maps and bounded differences | Structural comparison results and limitations |

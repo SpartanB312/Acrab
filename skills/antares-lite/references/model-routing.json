@@ -5,7 +5,7 @@
     "1": "Literal tool invocation and field reporting",
     "2": "Schema, identity, exact selection and bounded retrieval",
     "3": "Heuristic triage, coverage and evidence accounting",
-    "4": "JVM dataflow, context and contradictory reconstruction",
+    "4": "JVM dataflow, context and contradictory evidence",
     "5": "Complex control flow, cross-method assumptions and semantic review"
   },
   "delegationRequiresAuthorization": true,
@@ -14,11 +14,11 @@
   "roles": {
     "antares-lite-coordinator": {
       "skill": "SKILL.md",
-      "workflow": "workflows/coordinator.md",
+      "workflow": "SKILL.md",
       "minimum": 4,
       "recommended": 4,
       "escalated": 5,
-      "escalationTriggers": ["Conflicting cross-method claims", "Complex reconstruction", "Artifact publication"]
+      "escalationTriggers": ["Complex cross-role reasoning", "Conflicting evidence"]
     },
     "antares-lite-jvm-indexer": {
       "skill": "specialists/jvm-indexer/SKILL.md",
@@ -26,7 +26,7 @@
       "minimum": 2,
       "recommended": 2,
       "escalated": 3,
-      "escalationTriggers": ["Identity conflict", "Ambiguous or multi-release inventory", "Reference interpretation"]
+      "escalationTriggers": ["Ambiguous inventory", "Identity conflict", "Complex reference interpretation"]
     },
     "antares-lite-evidence-finder": {
       "skill": "specialists/evidence-finder/SKILL.md",
@@ -34,7 +34,7 @@
       "minimum": 3,
       "recommended": 3,
       "escalated": 4,
-      "escalationTriggers": ["Overload or cursor collision", "Combined guard hypothesis", "Decoder reconstruction"]
+      "escalationTriggers": ["Interacting candidate signals", "Complex coverage accounting"]
     },
     "antares-lite-bytecode-analyst": {
       "skill": "specialists/bytecode-analyst/SKILL.md",
@@ -42,7 +42,7 @@
       "minimum": 4,
       "recommended": 4,
       "escalated": 5,
-      "escalationTriggers": ["Irreducible loop", "Merged operand alternatives", "Cross-call guard assumptions"]
+      "escalationTriggers": ["Complex control flow", "Cross-method reasoning", "Conflicting evidence"]
     },
     "antares-lite-decompiler": {
       "skill": "specialists/decompiler/SKILL.md",
@@ -50,7 +50,7 @@
       "minimum": 3,
       "recommended": 4,
       "escalated": 5,
-      "escalationTriggers": ["Backend disagreement", "Obfuscated loop reconstruction", "Semantic comparison"]
+      "escalationTriggers": ["Complex semantic reconstruction", "Backend disagreement"]
     },
     "antares-lite-bytecode-patcher": {
       "skill": "specialists/bytecode-patcher/SKILL.md",
@@ -58,7 +58,7 @@
       "minimum": 4,
       "recommended": 4,
       "escalated": 5,
-      "escalationTriggers": ["Branch deletion", "Control-flow edits", "Uncertain publication"]
+      "escalationTriggers": ["Complex control-flow change", "Uncertain application state"]
     }
   }
 }

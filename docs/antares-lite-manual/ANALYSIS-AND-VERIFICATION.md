@@ -1,8 +1,12 @@
-# Context and Independent Verification
+# Static Analysis Capabilities
 
 Antares Lite 1.3 adds fresh byte identity, actual operand provenance, direct
 reference queries, one-callsite context, bounded static strings and structural
 comparison. These are static capabilities; the server does not execute targets.
+
+Use the capabilities relevant to the requested question. The sections below
+are independent options, not a required analysis pipeline. A bounded answer
+can be complete with explicitly unknown runtime behavior.
 
 ## Identity and evidence
 
@@ -13,7 +17,7 @@ Index reuse rejects changed stored bytes. Import changed inputs as new projects.
 Method evidence includes `inputSha256` and `analysisVersion`; retain these with
 the exact class/method/descriptor, raw ASM indexes and complete arguments.
 
-## Explain an actual branch
+## Operands and control flow
 
 Select the exact descriptor and locate returned indexes with `method_bytecode`.
 Use `method_stack_slice` at each disputed branch, not at the nearest load.
@@ -30,10 +34,12 @@ dead. Reference sites and raw ASM positions are static evidence.
 
 ## Supply a bounded context
 
-Page `method_references` for exact callers and `field_references` for all indexed
-guard writes. Use `method_call_context` at a direct invocation to obtain numeric
-`calleeArgumentValues`. These describe one observed site, not all possible
-callers, virtual dispatch, reflection or external dependencies.
+When a question depends on callers or field state, use `method_references` or
+`field_references` for the relevant indexed sites. Use `method_call_context` at
+a direct invocation when its numeric `calleeArgumentValues` help the analysis.
+These describe one observed site, not all possible callers, virtual dispatch,
+reflection or external dependencies. Request exhaustive pages only when the
+question needs that coverage.
 
 Example arguments for a callee analysis:
 
@@ -44,18 +50,21 @@ Example arguments for a callee analysis:
   "methodName": "<init>",
   "methodDescriptor": "(JC)V",
   "argumentValues": {"1": "65"},
-  "fieldValues": {"example/Flags.enabled:Z": "0"}
+  "fieldValues": {"example/Limits.threshold:I": "100"}
 }
 ```
 
 Argument keys are zero-based formal argument ordinals excluding `this`;
 `"1"` selects the char, even though the preceding long uses two JVM local slots.
-Field keys use internal owners (`example/Guard.enabled:Z`) and string numeric
+Field keys use internal owners (`example/Limits.threshold:I`) and string numeric
 values. Maps are fixed assumptions, echoed under conditional scope; they do
 not prove field writes or an invariant over every call. Record where each
 value came from, including the caller descriptor/index or inspected writer.
 
 ## Recover strings and compare structure
+
+These are separate operations for requested recovery or archive comparison;
+neither is a prerequisite for bytecode inspection or source retrieval.
 
 `recover_strings` models supported cyclic-XOR initializers without loading
 target code. Require `status: recovered`, retain ordered keys (including repeated

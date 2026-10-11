@@ -71,7 +71,7 @@ scope. Record `reindexed`; the current implementation returns false and does
 not automatically index its output. Call `index_archive` when needed and verify
 its output checksum. Obtain output `archive_summary`; its hash must equal
 `artifactChecksum`. Inspect the requested method/change on the output project.
-Run `verify_archive_identity` with `artifactChecksum`. Preserve any caller/field
+Run `verify_archive_identity` with `artifactChecksum`. Preserve any contextual
 assumptions used to justify the change. Static verifier success does not prove
 behavioral equivalence.
 Changed indexes now belong to a new source. A failure of postchecks means

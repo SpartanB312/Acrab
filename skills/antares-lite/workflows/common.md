@@ -7,6 +7,10 @@ otherwise the coordinator supplies the text. Do not demand inline copies when
 resources can be read. Obtain inaccessible instructions before domain work
 rather than inventing a substitute workflow.
 
+Use the parts of a role workflow that answer the request. Analysis tools are
+options, not mandatory stages; patch preparation and publication retain their
+fixed safety gates.
+
 ## Task input
 
 Supply the user goal, deliverable, exact scope, source identity, existing
@@ -55,6 +59,8 @@ initialization, not reuse of a shared stateless session.
   Index reuse verifies current bytes and rejects mismatch. Compare raw response
   fields before claiming identity conflict; an earlier report or filename is
   insufficient. Save `inputSha256` and `analysisVersion` on method evidence.
+  Reuse verified identity within the same task while the stored bytes remain
+  unchanged; verify again when adopting a different input or output project.
 - Copy class names/descriptors from `class_summary`. Bytecode responses use
   `descriptor`; decompile/patch use `methodDescriptor`. Requests consistently
   use `methodDescriptor`.

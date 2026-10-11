@@ -22,8 +22,8 @@ does not require import. A server-local pathname is not an import parameter;
    query tools also ensure an index, so repeated indexing is unnecessary.
 3. **Check identity.** Use `verify_archive_identity` with the expected hash
    when available. Require `matches` and, when supplied, `expectedMatches`.
-   Record actual and recorded hashes from the response, not memory. Obtain
-   `archive_summary` and compare `archiveSha256`
+   Record actual and recorded hashes from the response, not memory. When
+   inventory is needed, obtain or reuse `archive_summary` and compare `archiveSha256`
    to the project record and any caller-supplied expected checksum. Record
    class/package/method/field/Kotlin counts and manifest entry point when
    present. These are inventory observations, not runtime entry-point proof.
@@ -36,9 +36,9 @@ does not require import. A server-local pathname is not an import parameter;
    `internalName`, access flags, methods and JVM descriptors. Use a string
    reference's exact owner/method/descriptor/index where present; field
    constants may have no method anchor.
-6. **Hand off.** Send the same identity/summary and the smallest target set
-   needed by Rigel, Mira, Vega or Altair. State the remaining question and
-   evidence pointers, not merely "analyze this class".
+6. **Deliver or hand off.** Return the requested inventory or targets with
+   identity and query bounds. If further work is needed, pass the same identity
+   and smallest relevant target set with the unresolved question and evidence.
 
 When the question concerns callers or field use, page `method_references` or
 `field_references` with the exact descriptor and fixed direction/access filters.
@@ -64,8 +64,8 @@ Changed input becomes a new import with a new checksum.
 
 ## Completion
 
-Complete when identity/summary and requested bounded targets are verified.
+Complete when identity and the requested inventory or bounded targets are verified.
 For a full inventory request that exceeds query limits, return partial with
 the exposed counts and missing coverage. Preserve entropy/classification as
-candidate metadata rather than decoded strings. Return the shared handoff
-with the query and effective limit.
+candidate metadata rather than decoded strings. Include the query and effective
+limit; use the shared handoff for delegated work.

@@ -66,18 +66,20 @@ category/subpattern, evidence, weight, confidence, limitations and `nextTools`.
 A shortlist should name why each selected finding matters to the user question
 and the bytecode check needed, rather than merely repeat its score.
 
-Route branch, string-transform and dispatch questions to Rigel with exact
+Confirm a candidate with exact method evidence only when the requested
+conclusion needs confirmation; inspect locally or hand off the relevant
 methods/indexes. A decoder-shaped method is not recovered plaintext.
 Invokedynamic bootstrap metadata is not a resolved runtime call target;
 ordinary lambdas and string concatenation also use it. Do not execute
 transforms or bootstrap methods.
 
-When plaintext recovery is requested for a supported cyclic-XOR initializer,
-call `recover_strings` rather than reimplementing or executing a decoder.
+When plaintext recovery is requested, use `recover_strings` if the tool supports
+the input pattern. Do not turn candidate triage into an automatic recovery step.
 Record recovery status, ordered key positions, plaintext and source indexes.
 Unsupported recovery is an explicit gap, not permission to guess strings.
-For a static guard hypothesis, enumerate `field_references` writes and direct
-caller contexts; do not call the field globally constant from one entry path.
+Investigate caller or field context only when the requested conclusion depends
+on it, preserving unexamined sites as limitations. One entry path cannot
+establish that a field is globally constant.
 
 ## Completion
 

@@ -42,9 +42,9 @@ and use `cfr` by default when no preference exists.
 
 ## Retry and completion
 
-When structural comparison is requested, use the supplied output archive as a
+When structural comparison is requested, use the second supplied archive as a
 separate project, verify both identities and call `compare_structure` with
-explicit class/member naming maps. This compares access, inheritance,
+explicit maps for intended class/member renames. This compares access, inheritance,
 descriptors and entry point, not method bodies or behavior.
 
 If the requested backend is unavailable or fails, report that and name any

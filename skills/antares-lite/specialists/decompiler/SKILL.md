@@ -11,16 +11,17 @@ Read [the shared contract](../../workflows/common.md) and
 
 ## Intelligence requirement
 
-Minimum **3/5** for bounded retrieval, recommended **4/5**, escalation **5/5**
-for backend disagreements, obfuscated loop reconstruction or semantic comparison.
-Use [host model routing](../../references/model-routing.md); an exact
-declaration match does not reduce the reasoning needed to validate its body.
+Minimum **3/5** for retrieval, recommended **4/5**, escalation **5/5** for complex
+semantic reconstruction or backend disagreements. The main agent uses
+[model routing](../../references/model-routing.md) for authorized delegation;
+an exact declaration match does not prove body equivalence.
 
 ## Preferred tools
 
 `list_decompiler_backends`, `decompile_class`, `decompile_method`;
-`class_summary`, `method_bytecode`, `method_stack_slice`, `compare_structure`
-and `recover_strings` check identity and disputed reconstruction claims.
+`class_summary` resolves method identity. Use `method_bytecode` or
+`method_stack_slice` for disputed semantic claims and `compare_structure`
+for requested archive comparisons.
 
 ## Decisions that matter
 
@@ -36,8 +37,9 @@ and `recover_strings` check identity and disputed reconstruction claims.
   full-class fallback as such.
 - No source-text checksum is returned. `inputSha256` identifies the archive,
   not an output checksum. Nonblank text and confidence do not prove accuracy.
-- Check disputed reconstruction claims against the relevant bytecode.
-  Use explicit naming maps when comparison of supplied archives is requested;
+- Source retrieval can finish with extraction caveats. Check relevant bytecode
+  when the task asks for semantic conclusions or resolving disputed claims.
+  For requested archive comparisons, map intended renames explicitly;
   structural matches do not establish method-body equivalence.
 
 ## Deliverable

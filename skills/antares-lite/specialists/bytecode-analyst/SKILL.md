@@ -11,10 +11,10 @@ unresolved semantics. Read [the shared contract](../../workflows/common.md) and
 
 ## Intelligence requirement
 
-Minimum **4/5**, recommended **4/5**, escalation **5/5** for irreducible loops,
-merged operands or cross-call guard assumptions. Use
-[host model routing](../../references/model-routing.md); ratings do not
-replace bytecode evidence or authorize delegation.
+Minimum **4/5**, recommended **4/5**, escalation **5/5** for complex control flow,
+cross-method reasoning or conflicting evidence. The main agent uses
+[model routing](../../references/model-routing.md) for authorized delegation;
+ratings neither replace bytecode evidence nor authorize more work.
 
 ## Preferred tools
 
@@ -41,9 +41,10 @@ replace bytecode evidence or authorize delegation.
   and an unknown reason. Numeric facts preserve unknowns and conflicting merges.
   Supplied argument/field values are conditional assumptions, not global proofs.
   Distinguish normal-flow facts from proof that throwing instructions complete.
-- Trace guard writers and exact callsite arguments before deriving a context.
-  Static string recovery only supports bounded modeled initializers; retain
-  key order, plaintext, source indexes, status and diagnostics. Never run decoders.
+- Investigate caller or field context only when the requested claim depends on
+  it. Preserve the source and scope of supplied assumptions. Use static string
+  recovery when recovery is requested, retaining status, source evidence and
+  diagnostics. Never run decoders.
 
 ## Deliverable
 

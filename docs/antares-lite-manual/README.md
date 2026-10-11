@@ -13,10 +13,10 @@ servers or tool permissions.
 | Look up parameters, result fields, limits and tool effects | [Tool reference](TOOL-REFERENCE.md) |
 | Configure specialists, delegate and judge evidence coverage | [Specialist workflows](SPECIALIST-WORKFLOWS.md) |
 | Draft, preview, apply or recover a method patch | [Method patching](METHOD-PATCHING.md) |
-| Trace operands, conditional context, strings and independent checks | [Analysis and verification](ANALYSIS-AND-VERIFICATION.md) |
+| Use operand, context, string recovery or comparison capabilities | [Static analysis capabilities](ANALYSIS-AND-VERIFICATION.md) |
 
 The distribution includes this entire manual, [the coordinating skill](../../skills/antares-lite/SKILL.md),
-five specialist skills, seven workflow files, portable intelligence ratings,
+five specialist skills, six workflow files, portable intelligence requirements,
 agent templates and
 [the generated tool catalog](../../catalog/tools-catalog.json). The catalog
 contains actual schemas from the bundled server. A repository checkout generates

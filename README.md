@@ -25,9 +25,10 @@ checks pass.
 - **Guarded patching:** binds every operation to source instruction indexes,
   archive checksums, method fingerprints, debug metadata, and a single-use
   preview.
-- **Agent-ready:** ships a main-agent skill, five specialist roles, portable
-  intelligence requirements, model routing guidance and agent templates.
-- **Reproducible evidence:** binds method evidence to source hashes and records
+- **Agent-ready:** ships a main-agent skill, five specialist roles, task-focused
+  workflows, role-specific intelligence requirements and model routing guidance
+  for authorized delegation.
+- **Traceable evidence:** binds method evidence to source hashes and records
   assumptions, analysis versions, and coverage limits.
 
 ## Requirements
@@ -106,7 +107,8 @@ Connect your MCP client directly to this endpoint. See the
    server.
 3. Use `create_project` to import a JAR as Base64 bytes.
 4. Record the returned `projectId` and SHA-256 checksum.
-5. Call `verify_archive_identity`, `index_archive`, then `archive_summary`.
+5. Verify identity with `verify_archive_identity` and index the archive. Use
+   `archive_summary` when inventory is needed.
 6. Locate a class with `list_classes` or `search_classes`, inspect its methods
    with `class_summary`, and request exact bytecode evidence with
    `method_bytecode`.
@@ -176,11 +178,14 @@ Start with the [Antares Lite skill](skills/antares-lite/SKILL.md). The
 [specialist workflow guide](docs/antares-lite-manual/SPECIALIST-WORKFLOWS.md)
 explains task decomposition, evidence levels, handoffs, conflict resolution,
 and completion criteria. Clients without subagent support can follow the same
-workflows directly. The main-agent [coordinator workflow](skills/antares-lite/workflows/coordinator.md)
-handles evidence conflicts and completion. [Intelligence requirements](skills/antares-lite/references/model-routing.md)
-and their [JSON ratings](skills/antares-lite/references/model-routing.json) guide
-selection from the host's supported inventory while preserving user model and
-single-agent constraints. They do not benchmark models or authorize delegation.
+workflows directly. Roles are optional responsibilities, not a pipeline that
+runs every tool. Choose checks for the requested result, preserve user model
+and single-agent choices, and delegate only when authorized.
+
+[Intelligence requirements](skills/antares-lite/references/model-routing.md)
+and their [JSON representation](skills/antares-lite/references/model-routing.json)
+help the main agent select an appropriately capable supported model for each
+role. The requirements describe task demands, not measured model scores.
 
 ## Security Model
 
@@ -196,9 +201,9 @@ single-agent constraints. They do not benchmark models or authorize delegation.
   when the two disagree.
 - Argument/field bindings are explicit assumptions about a selected context.
   Direct references do not resolve reflection, virtual dispatch or unseen callers.
-- Compilation, matching structure, finder-zero and static verification are
-  separate from behavioral fidelity. Evidence checksums detect alteration,
-  not author authenticity or semantic correctness.
+- A structural match, zero detector findings or successful static verification
+  does not establish behavioral equivalence. Evidence checksums detect
+  alteration, not author authenticity or semantic correctness.
 - HTTP binds to loopback by default. Non-loopback binding requires
   `ANTARES_LITE_ALLOW_REMOTE=true` and must be placed behind an authenticated
   trust boundary.
@@ -245,7 +250,7 @@ Not supported:
 - [Tool reference](docs/antares-lite-manual/TOOL-REFERENCE.md)
 - [Specialist workflows](docs/antares-lite-manual/SPECIALIST-WORKFLOWS.md)
 - [Method patching](docs/antares-lite-manual/METHOD-PATCHING.md)
-- [Context and independent verification](docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md)
+- [Static analysis capabilities](docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md)
 - [Agent skill entrypoint](skills/antares-lite/SKILL.md)
 
 ## Project Layout
@@ -276,10 +281,7 @@ Create installable and distributable artifacts:
 Distribution archives are written to
 `antares-lite-app/build/distributions/`. The current release version is
 **1.3.1**. ZIP/TAR packages include the manual, skills, model routing references,
-generated catalog and license.
-
-For release verification, check clean archive extraction, launcher lifecycle,
-runtime version, catalog schemas and packaged-resource parity separately.
+agent templates, generated catalog and license.
 
 ## License
 

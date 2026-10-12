@@ -52,9 +52,13 @@ behavioral equivalence.
 ## Supported deployment
 
 Use JDK 21 or newer. The launcher supports newline-delimited stdio JSON-RPC
-and HTTP JSON-RPC at `/mcp`. HTTP has session headers and `GET /health`;
-it has no SSE stream. It defaults to loopback, and remote binding needs
-`ANTARES_LITE_ALLOW_REMOTE=true` plus an external authenticated trust boundary.
+and Streamable HTTP at `/mcp`, with JSON discovery/listings and request-scoped
+SSE tool responses. `2026-07-28` uses per-request metadata; the supported
+2025 protocols retain initialization and session headers. `GET /health`
+reports readiness. HTTP defaults to loopback with Host/Origin validation.
+Remote binding requires `ANTARES_LITE_ALLOW_REMOTE=true`, a bearer token,
+allowed hosts and a TLS-protected trust boundary. See
+[the quickstart](USER-QUICKSTART.md) for headers, limits and cancellation rules.
 
 The CLI stores projects under `data` relative to its working directory.
 Projects persist; most analysis caches and prepared preview bytes do not.

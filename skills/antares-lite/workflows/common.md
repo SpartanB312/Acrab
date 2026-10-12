@@ -38,12 +38,15 @@ result budget. Unknown inputs may be null; Sirius establishes identity and
 ```
 
 Use the existing MCP connection. The coordinator owns transport setup. The
-server supports newline-delimited stdio and JSON responses to HTTP
-`POST /mcp`, session headers and no SSE.
-Send `notifications/initialized` after initialization. HTTP assigns a unique
-session when none is supplied; retain its header on every later request.
-Notifications return 202 with no body. Unknown/closed sessions require a new
-initialization, not reuse of a shared stateless session.
+server supports newline-delimited stdio and Streamable HTTP `POST /mcp` with
+JSON discovery/listings and request-scoped SSE tool responses. Let the MCP
+client handle framing and protocol negotiation. `2026-07-28` uses per-request
+metadata and matching HTTP headers without sessions. Supported 2025 clients
+initialize without a session header, retain the server-issued session ID and
+send `notifications/initialized` before tool requests. Legacy notifications
+return 202 with no body; unknown/expired sessions require a fresh handshake.
+Streams are not resumable. A timeout or disconnect can leave import, indexing
+or patch work running; reconcile uncertain writes instead of blindly retrying.
 
 ## Source identity and addressing
 

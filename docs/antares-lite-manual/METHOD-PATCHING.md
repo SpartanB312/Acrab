@@ -56,139 +56,45 @@ source when composition is intended, with fresh indexes/hashes.
 
 ## Build a request from evidence
 
-Use a small fixture rather than guess an index. Place this source in
-`PatchFixture.java` in a fixture working directory:
+Use the existing MCP connection described in [the quickstart](USER-QUICKSTART.md).
+HTTP tool calls return SSE; a plain JSON-only HTTP helper cannot decode those
+responses. Build the request from the selected imported archive and observed
+method.
 
-```java
-public final class PatchFixture {
-    public static String label() {
-        return "before";
-    }
-}
-```
-
-Compile and package only the fixture class:
-
-```sh
-javac -g PatchFixture.java
-jar --create --file patch-fixture.jar PatchFixture.class
-```
-
-Start HTTP as described in [the quickstart](USER-QUICKSTART.md).
-This PowerShell client initializes a distinct session and checks protocol/tool
-errors before decoding JSON tool bodies:
-
-```powershell
-$liteEndpoint = 'http://127.0.0.1:8080/mcp'
-$liteHeaders = @{ 'Mcp-Session-Id' = ('fixture-' + [guid]::NewGuid().ToString('N')) }
-$script:liteCallId = 0
-function Invoke-LiteRpc($method, $params) {
-    $script:liteCallId += 1
-    $body = @{ jsonrpc = '2.0'; id = $script:liteCallId; method = $method; params = $params } |
-        ConvertTo-Json -Depth 30 -Compress
-    $reply = Invoke-RestMethod -Uri $liteEndpoint -Method Post -Headers $liteHeaders -ContentType 'application/json' -Body $body
-    if ($reply.error) { throw $reply.error.message }
-    return $reply.result
-}
-function Invoke-LiteTool($name, $arguments) {
-    $result = Invoke-LiteRpc 'tools/call' @{ name = $name; arguments = $arguments }
-    $text = $result.content[0].text
-    if ($result.isError) { throw $text }
-    return ($text | ConvertFrom-Json)
-}
-Invoke-LiteRpc 'initialize' @{
-    protocolVersion = '2025-03-26'
-    capabilities = @{}
-    clientInfo = @{ name = 'patch-fixture'; version = '1.0' }
-} | Out-Null
-$notification = @{ jsonrpc = '2.0'; method = 'notifications/initialized' } | ConvertTo-Json -Compress
-Invoke-WebRequest -Uri $liteEndpoint -Method Post -Headers $liteHeaders -ContentType 'application/json' -Body $notification | Out-Null
-Invoke-LiteRpc 'tools/list' @{} | Out-Null
-```
-
-Import, verify identity and select the actual returned `LDC` index:
-
-```powershell
-$fixtureBytes = [IO.File]::ReadAllBytes((Join-Path (Get-Location) 'patch-fixture.jar'))
-$project = Invoke-LiteTool 'create_project' @{
-    fileName = 'patch-fixture.jar'
-    archiveBase64 = [Convert]::ToBase64String($fixtureBytes)
-}
-Invoke-LiteTool 'index_archive' @{ projectId = $project.projectId } | Out-Null
-$summary = Invoke-LiteTool 'archive_summary' @{ projectId = $project.projectId }
-if ($summary.archiveSha256 -ne $project.sha256) { throw 'Source identity mismatch' }
-Invoke-LiteTool 'patch_catalog' @{} | Out-Null
-$target = @{
-    projectId = $project.projectId
-    className = 'PatchFixture'
-    methodName = 'label'
-    methodDescriptor = '()Ljava/lang/String;'
-}
-$bytecode = Invoke-LiteTool 'method_bytecode' $target
-$anchors = @($bytecode.instructions | Where-Object {
-    $_.opcodeName -eq 'LDC' -and $_.operand -eq 'before'
-})
-if ($anchors.Count -ne 1) { throw 'Expected one observed before constant' }
-$request = @{
-    schemaVersion = 2
-    className = $target.className
-    methodName = $target.methodName
-    methodDescriptor = $target.methodDescriptor
-    operations = @(@{
-        operation = 'replace_constant'
-        anchorInstructionIndex = $anchors[0].index
-        arguments = @{ value = 'after' }
-    })
-}
-$draft = Invoke-LiteTool 'method_patch_draft' @{ projectId = $project.projectId; request = $request }
-if (-not $draft.supported -or $draft.status -ne 'valid') { throw 'Draft rejected' }
-$request.inputSha256 = $draft.inputSha256
-$request.methodInstructionSha256 = $draft.methodInstructionSha256
-$request.debugMetadataSha256 = $draft.debugMetadataSha256
-$request.operations[0].anchorOpcode = $draft.operations[0].anchorOpcode
-$preview = Invoke-LiteTool 'method_patch_preview' @{ projectId = $project.projectId; request = $request }
-if (-not $preview.supported -or $preview.status -ne 'valid' -or -not $preview.previewId) {
-    throw 'Preview rejected'
-}
-$preview | ConvertTo-Json -Depth 30
-```
+1. Verify the source project and checksum, resolve the exact method descriptor,
+   and inspect `method_bytecode` plus `patch_catalog`.
+2. Select executable anchors from the returned source instruction indexes.
+   Require observed opcode/operands and complete evidence for the intended
+   change; do not guess indexes or count visible lines.
+3. Call `method_patch_draft` with outer `projectId` and a nested `request`
+   containing `schemaVersion: 2`, `className`, `methodName`,
+   `methodDescriptor` and `operations`. Operation argument values are strings.
+   Require `supported: true`, `status: valid` and every operation `valid`.
+4. Copy draft `inputSha256`, `methodInstructionSha256`,
+   `debugMetadataSha256` and each operation's `anchorOpcode` into that same
+   request. Call `method_patch_preview` with it; require a valid supported
+   preview and a nonempty `previewId`.
 
 Review every operation's status/evidence, source fingerprints,
 `patchedClassSha256`, diagnostics/checks, semantic/structural/debug changes
-and warnings. Require `verificationScope: asm-static`. The total count equals
-`instructionChanges.length` and semantic plus structural counts. Debug changes
-are separate. With `diffTruncated`, evidence is operation-level, not a full diff.
+and warnings. Require `verificationScope: asm-static`. The changed instruction
+count equals `instructionChanges.length` and semantic plus structural counts.
+Debug changes are separate. With `diffTruncated`, evidence is operation-level,
+not a full diff.
 
-Only after review and authorization, apply the identical request and postcheck:
+Only after review and authorization, call `apply_method_patch` with the same
+outer `projectId`, the returned `previewId` and the identical nested request.
+Check `verified`, output project ID, artifact path and checksum. The current
+implementation returns `reindexed: false`; index the output when needed,
+compare its summary/index checksum with `artifactChecksum`, run
+`verify_archive_identity` and inspect the requested method change on the
+output project. Record the raw apply flag separately from later indexing
+success. Output instruction indexes belong to that new source.
 
-```powershell
-$applied = Invoke-LiteTool 'apply_method_patch' @{
-    projectId = $project.projectId
-    previewId = $preview.previewId
-    request = $request
-}
-if (-not $applied.verified) { throw 'Output verification failed' }
-if (-not $applied.reindexed) {
-    $outputIndex = Invoke-LiteTool 'index_archive' @{ projectId = $applied.outputProjectId }
-    if ($outputIndex.archiveSha256 -ne $applied.artifactChecksum) { throw 'Output index identity mismatch' }
-}
-$outputSummary = Invoke-LiteTool 'archive_summary' @{ projectId = $applied.outputProjectId }
-if ($outputSummary.archiveSha256 -ne $applied.artifactChecksum) { throw 'Output identity mismatch' }
-$outputTarget = $target.Clone()
-$outputTarget.projectId = $applied.outputProjectId
-$outputCode = Invoke-LiteTool 'method_bytecode' $outputTarget
-if (-not ($outputCode.instructions | Where-Object {
-    $_.opcodeName -eq 'LDC' -and $_.operand -eq 'after'
-})) { throw 'Requested output constant is missing' }
-$applied | ConvertTo-Json -Depth 30
-```
-
-This checks constant replacement without executing the target. Keep original
-identity, preview evidence, output path/hash/ID and verification/postchecks.
-The current apply implementation returns `reindexed: false`; explicit indexing
-is an expected postcheck, not evidence that publication failed. Record the raw
-apply flag separately from subsequent indexing success. Indexes in that output
-belong to a new source.
+Keep original identity, preview evidence, output path/hash/ID and the bounded
+verification/postchecks. This workflow never executes the target. A timeout,
+cancellation or disconnected response does not roll back import, indexing or
+patch work; resolve uncertain publication as described below.
 
 ## Lifetime and recovery
 

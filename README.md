@@ -35,7 +35,7 @@ checks pass.
 
 - JDK 21 or newer
 - A Git checkout with the bundled Gradle wrapper
-- An MCP client for stdio, or any JSON-capable HTTP client for HTTP transport
+- An MCP client supporting stdio or Streamable HTTP (JSON and SSE responses)
 
 ## Quick Start
 
@@ -92,24 +92,31 @@ Send JSON-RPC requests to:
 http://127.0.0.1:8080/mcp
 ```
 
-Readiness is available at `GET /health`. Responses are JSON documents; the
-server does not use SSE. Initialization returns a unique `Mcp-Session-Id`;
-retain it on every later request. Send `notifications/initialized` after
-initialization (HTTP 202, no body). Close sessions with `DELETE /mcp`.
+Readiness is available at `GET /health`. Connect a Streamable HTTP MCP client
+directly to `/mcp`; it must accept both `application/json` and
+`text/event-stream`. Tool calls return request-scoped SSE responses with a
+final JSON-RPC message. Discovery and tool listings return JSON.
+
+Protocol `2026-07-28` uses `server/discover`, per-request metadata and matching
+HTTP headers, without initialization or sessions. Clients using
+`2025-11-25`, `2025-06-18` or `2025-03-26` initialize without a session header,
+retain the server-issued `Mcp-Session-Id`, then send
+`notifications/initialized` (HTTP 202, no body). Legacy sessions can be closed
+with `DELETE /mcp`. GET streams are available only for legacy sessions;
+streams are not resumable.
 
 Connect your MCP client directly to this endpoint. See the
 [quickstart](docs/antares-lite-manual/USER-QUICKSTART.md) for complete examples.
 
 ### First Analysis Steps
 
-1. Call MCP `initialize`.
-2. Send `notifications/initialized`, then call MCP `tools/list` to inspect the schemas exposed by the connected
-   server.
-3. Use `create_project` to import a JAR as Base64 bytes.
-4. Record the returned `projectId` and SHA-256 checksum.
-5. Verify identity with `verify_archive_identity` and index the archive. Use
+1. Connect the MCP client using its supported protocol, then call `tools/list`
+   to inspect the schemas exposed by the connected server.
+2. Use `create_project` to import a JAR as Base64 bytes.
+3. Record the returned `projectId` and SHA-256 checksum.
+4. Verify identity with `verify_archive_identity` and index the archive. Use
    `archive_summary` when inventory is needed.
-6. Locate a class with `list_classes` or `search_classes`, inspect its methods
+5. Locate a class with `list_classes` or `search_classes`, inspect its methods
    with `class_summary`, and request exact bytecode evidence with
    `method_bytecode`.
 
@@ -205,8 +212,15 @@ role. The requirements describe task demands, not measured model scores.
   does not establish behavioral equivalence. Evidence checksums detect
   alteration, not author authenticity or semantic correctness.
 - HTTP binds to loopback by default. Non-loopback binding requires
-  `ANTARES_LITE_ALLOW_REMOTE=true` and must be placed behind an authenticated
-  trust boundary.
+  `ANTARES_LITE_ALLOW_REMOTE=true`, a configured bearer token, explicit allowed
+  hosts, and a TLS-protected trust boundary. Host and Origin checks also apply
+  on loopback. Browser origins are restricted to same-origin or an explicit
+  allowlist; forwarded headers are not trusted.
+- HTTP bodies, workers, SSE streams and legacy sessions have configurable
+  bounds. Cancellation and timeouts attempt to interrupt observational tools;
+  only modern stream disconnects signal cancellation. Import, indexing and
+  patch operations finish without interruption.
+  Reconcile an uncertain write outcome before retrying.
 - Preview IDs bind source identity, canonical request, engine version, and
   prepared class bytes, and can be consumed only once.
 
@@ -217,10 +231,17 @@ role. The requirements describe task demands, not measured model scores.
 | `ANTARES_LITE_HTTP_HOST` | `127.0.0.1` | HTTP bind address |
 | `ANTARES_LITE_HTTP_PORT` | `8080` | HTTP port |
 | `ANTARES_LITE_ALLOW_REMOTE` | `false` | Permit non-loopback binding |
-| `ANTARES_LITE_MAX_HTTP_REQUEST_BYTES` | `134217728` | Maximum HTTP request body size |
+| `ANTARES_LITE_MAX_HTTP_REQUEST_BYTES` | `180005548` | Maximum UTF-8 request body size, including Base64 overhead |
+| `ANTARES_LITE_HTTP_AUTH_TOKEN` | unset | Require `Authorization: Bearer <token>`; mandatory for remote binding |
+| `ANTARES_LITE_HTTP_ALLOWED_HOSTS` | `127.0.0.1,localhost,::1` | Accepted Host names, without ports |
+| `ANTARES_LITE_HTTP_ALLOWED_ORIGINS` | empty | Additional browser origins, comma-separated |
 
 Projects are stored under `data` relative to the server working directory.
-Imported archives have a separate 128 MiB decoded-size limit.
+Imported archives have a separate 128 MiB decoded-size limit. The default HTTP
+body budget accommodates its Base64 encoding plus 1 MiB of envelope overhead.
+See [HTTP configuration](docs/antares-lite-manual/USER-QUICKSTART.md#http-configuration)
+for worker, stream, session and timeout settings. Choose limits for the JVM
+heap and expected archive sizes.
 
 ## Scope
 
@@ -232,14 +253,15 @@ Supported:
 - Obfuscation candidate triage
 - CFR and Vineflower reconstruction
 - Guarded schema v2 method patching
-- stdio and JSON-over-HTTP MCP transports
+- stdio and Streamable HTTP MCP transports with request-scoped SSE
 
 Not supported:
 
 - Android, DEX, or APK-specific analysis
 - Target-code execution or dynamic tracing
 - Arbitrary bytecode rewriting
-- Dashboards, REST compatibility APIs, and SSE
+- Dashboards and REST compatibility APIs
+- Deprecated `2024-11-05` HTTP+SSE transport and SSE event replay
 - Native database dependencies
 - Runtime multi-release class selection or dependency resolution
 

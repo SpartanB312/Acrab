@@ -35,9 +35,11 @@ choices; a stronger model does not supply missing evidence.
    finder candidates, reconstructed source, preview or patch application.
    Preserve an explicit backend choice and existing permission to apply.
    Analysis or preview does not authorize application.
-2. Use the connected server. When opening a connection, initialize and discover
-   `tools/list`; inspect the schema rather than guessing parameters.
-   Send `notifications/initialized` and retain the HTTP session header.
+2. Use the connected server and discover `tools/list`; inspect the schema
+   rather than guessing parameters. Let the client manage transport negotiation:
+   `2026-07-28` uses per-request metadata, while supported legacy clients
+   initialize, send `notifications/initialized` and retain the HTTP session ID.
+   HTTP tool responses use SSE; use an MCP client supporting JSON and SSE.
    `health` answers status questions; `list_tools` lists 32 domain tools,
    whereas `tools/list` includes both platform endpoints as well.
 3. Reuse a supplied project after `verify_archive_identity`. For a new archive, import

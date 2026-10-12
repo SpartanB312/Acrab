@@ -42,6 +42,7 @@ class HttpMcpTransportTest {
                 }, first)
                 assertEquals(202, notification.statusCode())
                 assertTrue(notification.body().isEmpty())
+                notifyInitialized(client, endpoint, second)
                 val closed = client.send(HttpRequest.newBuilder(URI.create(endpoint)).header("Mcp-Session-Id", first)
                     .DELETE().build(), HttpResponse.BodyHandlers.ofString())
                 assertEquals(204, closed.statusCode())
@@ -70,6 +71,7 @@ class HttpMcpTransportTest {
                     request(1, "initialize", buildJsonObject { put("protocolVersion", "2025-06-18") }),
                 )
                 val session = initialized.headers().firstValue("Mcp-Session-Id").orElse("")
+                notifyInitialized(client, endpoint, session)
                 assertEquals("2025-06-18", result(initialized.body())["protocolVersion"]?.jsonPrimitive?.content)
 
                 val listed = post(
@@ -144,6 +146,7 @@ class HttpMcpTransportTest {
                     request(1, "initialize", buildJsonObject { put("protocolVersion", "2025-06-18") }),
                 )
                 val session = initialized.headers().firstValue("Mcp-Session-Id").orElseThrow()
+                notifyInitialized(client, endpoint, session)
                 val rejected = post(
                     client,
                     endpoint,
@@ -177,7 +180,16 @@ class HttpMcpTransportTest {
         put("jsonrpc", "2.0")
         put("id", id)
         put("method", method)
-        if (params != null) put("params", params)
+        if (method == "initialize") put("params", JsonObject(params.orEmpty() + mapOf(
+            "capabilities" to JsonObject(emptyMap()),
+            "clientInfo" to buildJsonObject { put("name", "test"); put("version", "1") },
+        ))) else if (params != null) put("params", params)
+    }
+
+    private fun notifyInitialized(client: HttpClient, endpoint: String, session: String) {
+        assertEquals(202, post(client, endpoint, buildJsonObject {
+            put("jsonrpc", "2.0"); put("method", "notifications/initialized")
+        }, session).statusCode())
     }
 
     private fun result(body: String): JsonObject =

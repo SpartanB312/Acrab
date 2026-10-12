@@ -62,6 +62,7 @@ class StdioMcpTransportTest {
         val inputText = listOf(
             "not-json",
             line(1, "initialize", buildJsonObject { put("protocolVersion", "2025-06-18") }),
+            """{"jsonrpc":"2.0","method":"notifications/initialized"}""",
             line(2, "tools/list", JsonObject(emptyMap())),
             line(4, "not-a-method", JsonObject(emptyMap())),
             line(3, "tools/call", buildJsonObject { put("name", "missing") }),
@@ -74,7 +75,7 @@ class StdioMcpTransportTest {
 
         val responses = output.toString().trim().lines().map { Json.parseToJsonElement(it).jsonObject }
         assertEquals(5, responses.size)
-        assertEquals(-32600, responses[0]["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content?.toInt())
+        assertEquals(-32700, responses[0]["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content?.toInt())
         assertTrue(responses[2]["result"]?.jsonObject?.containsKey("tools") == true)
         assertEquals(-32601, responses[3]["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content?.toInt())
         assertEquals(-32602, responses[4]["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content?.toInt())
@@ -90,6 +91,7 @@ class StdioMcpTransportTest {
         context.tools.register(ToolDefinition("resolve", "Resolves.", schema)) { ToolResult.success("ok") }
         val inputText = listOf(
             line(1, "initialize", buildJsonObject { put("protocolVersion", "2025-06-18") }),
+            """{"jsonrpc":"2.0","method":"notifications/initialized"}""",
             line(2, "tools/call", buildJsonObject {
                 put("name", "resolve")
                 put("arguments", buildJsonObject { put("descriptor", "()V") })
@@ -115,7 +117,10 @@ class StdioMcpTransportTest {
             put("jsonrpc", "2.0")
             put("id", id)
             put("method", method)
-            if (params != null) put("params", params)
+            if (method == "initialize") put("params", JsonObject(params.orEmpty() + mapOf(
+                "capabilities" to JsonObject(emptyMap()),
+                "clientInfo" to buildJsonObject { put("name", "test"); put("version", "1") },
+            ))) else if (params != null) put("params", params)
         }
         return Json.encodeToString(JsonObject.serializer(), request)
     }

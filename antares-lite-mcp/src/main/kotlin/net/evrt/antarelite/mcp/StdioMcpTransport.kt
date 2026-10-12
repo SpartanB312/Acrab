@@ -41,7 +41,7 @@ class StdioMcpTransport(
         val request = try {
             protocol.parseLine(line)
         } catch (failure: JsonRpcException) {
-            write(protocol.errorResponse(null, failure.code, failure.message ?: "Invalid request."))
+            write(protocol.errorResponse(failure.requestId, failure.code, failure.message ?: "Invalid request.", failure.data))
             return true
         } catch (failure: Exception) {
             write(protocol.errorResponse(null, ParseErrorCode, "Parse error"))
@@ -55,7 +55,7 @@ class StdioMcpTransport(
             }
         } catch (failure: JsonRpcException) {
             if (!request.isNotification) {
-                write(protocol.errorResponse(request.id, failure.code, failure.message ?: "Invalid request."))
+                write(protocol.errorResponse(request.id, failure.code, failure.message ?: "Invalid request.", failure.data))
             }
         } catch (failure: Exception) {
             if (!request.isNotification) {

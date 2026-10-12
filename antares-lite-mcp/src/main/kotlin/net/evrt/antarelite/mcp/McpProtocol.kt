@@ -25,6 +25,9 @@ internal class McpProtocol(private val context: LiteContext) {
     fun parseLine(line: String): JsonRpcRequest = JsonRpc.parse(line)
 
     fun dispatch(request: JsonRpcRequest, modern: Boolean = hasModernMetadata(request)): JsonObject {
+        if (request.params?.containsKey("_meta") == true && request.params["_meta"] !is JsonObject) {
+            throw JsonRpcException(InvalidParamsErrorCode, "_meta must be an object.")
+        }
         if (modern) validateModernMetadata(request)
         if (request.isNotification && request.method != "notifications/initialized") {
             throw JsonRpcException(InvalidRequestErrorCode, "This method requires a request id.")

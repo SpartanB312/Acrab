@@ -3,6 +3,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.sse)
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.serialization.json)
 }

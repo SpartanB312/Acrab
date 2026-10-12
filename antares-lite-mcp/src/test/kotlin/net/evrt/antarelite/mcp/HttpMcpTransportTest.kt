@@ -96,6 +96,7 @@ class HttpMcpTransportTest {
                     session,
                 )
                 assertEquals("value=\"http\"", content(called.body()))
+                assertTrue(called.headers().firstValue("Content-Type").orElse("").startsWith("text/event-stream"))
                 assertTrue(session.isNotBlank())
             }
         }
@@ -116,14 +117,14 @@ class HttpMcpTransportTest {
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8),
                 )
                 assertEquals(200, health.statusCode())
-                assertTrue(health.body().contains("\"status\": \"ready\""))
+                assertEquals("ready", Json.parseToJsonElement(health.body()).jsonObject["status"]!!.jsonPrimitive.content)
 
                 val uninitialized = post(
                     client,
                     "http://127.0.0.1:${transport.port}/mcp",
                     request(1, "tools/list", null),
                 )
-                assertEquals(200, uninitialized.statusCode())
+                assertEquals(400, uninitialized.statusCode())
                 assertEquals(-32600, error(uninitialized.body()))
             }
         }
@@ -193,13 +194,19 @@ class HttpMcpTransportTest {
     }
 
     private fun result(body: String): JsonObject =
-        Json.parseToJsonElement(body).jsonObject["result"]!!.jsonObject
+        payload(body)["result"]!!.jsonObject
 
     private fun content(body: String): String =
         result(body)["content"]!!.jsonArray.single().jsonObject["text"]!!.jsonPrimitive.content
 
     private fun error(body: String): Int =
-        Json.parseToJsonElement(body).jsonObject["error"]!!.jsonObject["code"]!!.jsonPrimitive.content.toInt()
+        payload(body)["error"]!!.jsonObject["code"]!!.jsonPrimitive.content.toInt()
+
+    private fun payload(body: String): JsonObject {
+        if (body.trimStart().startsWith('{')) return Json.parseToJsonElement(body).jsonObject
+        return body.lines().filter { it.startsWith("data:") }.map { Json.parseToJsonElement(it.removePrefix("data:").trim()).jsonObject }
+            .last { it.containsKey("result") || it.containsKey("error") }
+    }
 
     private fun createWorkspace(): String =
         java.nio.file.Files.createTempDirectory("antares-lite-http-test").toString()

@@ -59,7 +59,7 @@ internal object JsonRpc {
             throw JsonRpcException(InvalidRequestErrorCode, "jsonrpc must be '2.0'.", requestId = id)
         }
         val method = (request["method"] as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
-            ?: throw JsonRpcException(InvalidRequestErrorCode, "Missing string method.")
+            ?: throw JsonRpcException(InvalidRequestErrorCode, "Missing string method.", requestId = id)
         if (request.containsKey("params") && request["params"] !is JsonObject) {
             throw JsonRpcException(InvalidParamsErrorCode, "params must be an object.", requestId = id)
         }
@@ -85,7 +85,7 @@ internal object JsonRpc {
         })
     }
 
-    private fun requireValidId(id: JsonElement?) {
+    internal fun requireValidId(id: JsonElement?) {
         when (id) {
             null -> Unit
             is JsonPrimitive -> if (!id.isString && !INTEGER_ID.matches(id.content)) {

@@ -25,6 +25,7 @@ class HttpMcpBoundaryTest {
 
     @Test fun `modern requests validate headers and work without sessions`() = server { context, transport ->
         context.tools.register(ToolDefinition("echo", "Echo.", JsonObject(emptyMap()))) { ToolResult.success("ok") }
+        context.tools.register(ToolDefinition("\u00e9", "Echo.", JsonObject(emptyMap()))) { ToolResult.success("ok") }
         val discovery = post(transport, modern("server/discover"), modernHeaders("server/discover"))
         assertEquals(200, discovery.statusCode())
         assertTrue(discovery.headers().firstValue("Mcp-Session-Id").isEmpty)
@@ -35,6 +36,12 @@ class HttpMcpBoundaryTest {
         assertEquals(200, called.statusCode())
         assertTrue(called.body().contains("event: message"))
         assertEquals("complete", payload(called)["result"]!!.jsonObject["resultType"]!!.jsonPrimitive.content)
+        val unicodeCall = modern("tools/call", buildJsonObject { put("name", "\u00e9") })
+        val rawName = post(transport, unicodeCall, modernHeaders("tools/call") + ("Mcp-Name" to "\u00e9"))
+        assertEquals(400, rawName.statusCode())
+        assertEquals(HeaderMismatchErrorCode, code(rawName))
+        val encodedName = "=?base64?${Base64.getEncoder().encodeToString("\u00e9".toByteArray(Charsets.UTF_8))}?="
+        assertEquals(200, post(transport, unicodeCall, modernHeaders("tools/call") + ("Mcp-Name" to encodedName)).statusCode())
         for (headers in listOf(emptyMap(), modernHeaders("ping"), modernHeaders("tools/list") + ("MCP-Protocol-Version" to "2025-11-25"))) {
             val rejected = post(transport, modern("tools/list"), headers)
             assertEquals(400, rejected.statusCode())
@@ -219,6 +226,25 @@ class HttpMcpBoundaryTest {
             assertEquals(InternalErrorCode, code(response))
             assertTrue(response.body().contains("may still complete"))
             assertTrue(completed.await(2, TimeUnit.SECONDS))
+        }
+
+    @Test fun `legacy stream disconnect is not a cancellation notification`() =
+        server(LiteConfig(httpSseHeartbeatMs = 25), setOf("read")) { context, transport ->
+            val started = CountDownLatch(1)
+            val release = CountDownLatch(1)
+            val finished = CountDownLatch(1)
+            context.tools.register(ToolDefinition("read", "Read.", JsonObject(emptyMap()))) {
+                started.countDown()
+                try { release.await(3, TimeUnit.SECONDS); ToolResult.success("done") } finally { finished.countDown() }
+            }
+            val session = session(transport)
+            val response = stream(transport, rpc("tools/call", buildJsonObject { put("name", "read") }), mapOf("Mcp-Session-Id" to session))
+            try {
+                assertTrue(started.await(2, TimeUnit.SECONDS))
+                response.body().close()
+                assertFalse(finished.await(150, TimeUnit.MILLISECONDS), "Legacy disconnection incorrectly cancelled the request.")
+            } finally { response.body().close(); release.countDown() }
+            assertTrue(finished.await(2, TimeUnit.SECONDS))
         }
 
     @Test fun `legacy cancellation is scoped to the owning session`() =

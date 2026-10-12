@@ -255,13 +255,14 @@ class HttpMcpTransport(
                         if (progressToken != null) sendProgress(progressToken, 1)
                         send(data = Json.encodeToString(JsonObject.serializer(), response), event = "message")
                     } catch (_: TimeoutCancellationException) {
+                        work.cancel()
                         send(data = JsonRpc.errorResponse(request.id, InternalErrorCode, TIMEOUT_MESSAGE).toString(), event = "message")
                     } finally {
-                        if (!work.result.isCompleted) work.cancel()
+                        if (modern && !work.result.isCompleted) work.cancel()
                         streams.release()
                     }
                 })
-            } finally { if (!started.get()) { work.cancel(); streams.release() } }
+            } finally { if (!started.get()) { if (modern) work.cancel(); streams.release() } }
         } else {
             try { call.respondJson(HttpStatusCode.OK, withTimeout(config.httpRequestTimeoutMs) { work.result.await() }) }
             catch (_: TimeoutCancellationException) {
@@ -341,7 +342,10 @@ class HttpMcpTransport(
 
     private fun validateHeader(call: ApplicationCall, name: String, expected: String, encoded: Boolean = false) {
         val value = call.request.headers.getAll(name)?.singleOrNull()
-        val decoded = if (encoded && value?.startsWith("=?base64?") == true && value.endsWith("?=")) {
+        if (value == null || value != value.trim() || value.any { it.code !in 0x20..0x7e && it != '\t' }) {
+            throw JsonRpcException(HeaderMismatchErrorCode, "$name is missing or malformed.")
+        }
+        val decoded = if (encoded && value.startsWith("=?base64?") && value.endsWith("?=")) {
             runCatching {
                 Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                     .decode(ByteBuffer.wrap(Base64.getDecoder().decode(value.substring(9, value.length - 2)))).toString()

@@ -2,6 +2,8 @@ plugins {
     application
 }
 
+apply(from = rootProject.file("gradle/android-tools.gradle.kts"))
+
 application {
     mainClass.set("net.evrt.acrab.app.MainKt")
     applicationName = "acrab"
@@ -66,6 +68,9 @@ distributions {
                 into("licenses")
                 include("AOSP-Apache-2.0.txt", "AOSP-NOTICE.txt")
             }
+            from(layout.buildDirectory.dir("android-tools")) {
+                into("tools/android")
+            }
             from(acrabSkills) {
                 into("skills/acrab")
                 include(packagedSkillFiles)
@@ -83,6 +88,6 @@ dependencies {
 }
 
 tasks.matching { it.name in setOf("distZip", "distTar", "installDist") }.configureEach {
-    dependsOn(generateToolCatalog)
+    dependsOn(generateToolCatalog, "prepareAndroidTools")
 }
 

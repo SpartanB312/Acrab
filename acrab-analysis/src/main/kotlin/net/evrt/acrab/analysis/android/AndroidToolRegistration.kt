@@ -59,7 +59,7 @@ fun registerAndroidTools(context: AcrabContext, repository: ProjectRepository) {
     register(context, "android_manifest_findings", "Return manifest configuration candidates with explicit inference limitations.", project) {
         analysis.manifestFindings(it.text("projectId")!!)
     }
-    register(context, "android_dex2jar_status", "Inspect trusted-root converter availability without running target artifacts.", emptyMap(), emptyList()) {
+    register(context, "android_dex2jar_status", "Inspect bundled and explicit trusted-root converter availability without running target artifacts.", emptyMap(), emptyList()) {
         conversion.dex2jarStatus()
     }
     register(context, "android_dex_tools_catalog", "List Android converter contracts; availability requires separately configured trusted tools.", emptyMap(), emptyList()) {

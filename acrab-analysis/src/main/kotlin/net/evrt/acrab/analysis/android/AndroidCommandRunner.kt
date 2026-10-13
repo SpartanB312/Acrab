@@ -19,6 +19,7 @@ internal class AndroidCommandRunner(
     private val toolRoot: Path? = System.getenv("ACRAB_ANDROID_TOOL_ROOT")?.takeIf(String::isNotBlank)?.let(Path::of),
     private val pathFallbackRoot: Path? = System.getenv("ACRAB_ANDROID_PATH_ROOT")?.takeIf(String::isNotBlank)?.let(Path::of),
     private val processLimiter: Semaphore = Semaphore(2),
+    private val bundledTools: BundledAndroidTools? = if (toolRoot == null && pathFallbackRoot == null) BundledAndroidTools.discover() else null,
 ) {
     suspend fun run(executable: String, arguments: List<String>, workingDirectory: Path, timeoutMs: Long = DEFAULT_TIMEOUT): AndroidToolCommandOutput {
         return processLimiter.withPermit {
@@ -34,7 +35,9 @@ internal class AndroidCommandRunner(
         validateBatchArguments(resolved, arguments)?.let { message ->
             return AndroidToolCommandOutput(false, executable, arguments, "", message, null, 0, false)
         }
-        val process = runCatching { ProcessBuilder(listOf(resolved) + arguments).directory(working.toFile()).start() }
+        val baseCommand = externalLocation(executable)?.let(::listOf) ?: activeBundle()?.command(executable)
+            ?: return AndroidToolCommandOutput(false, executable, arguments, "", "Executable is unavailable: $executable", null, 0, false)
+        val process = runCatching { ProcessBuilder(baseCommand + arguments).directory(working.toFile()).start() }
             .getOrElse { return AndroidToolCommandOutput(false, executable, arguments, "", it.message.orEmpty(), null, 0, false) }
         val started = System.nanoTime()
         return try {
@@ -54,7 +57,13 @@ internal class AndroidCommandRunner(
         }
     }
 
-    fun locate(executable: String): String? {
+    val bundledRoot: Path? get() = activeBundle()?.root
+
+    fun locate(executable: String): String? = externalLocation(executable) ?: activeBundle()?.locate(executable)
+
+    private fun activeBundle(): BundledAndroidTools? = bundledTools?.takeIf { toolRoot == null && pathFallbackRoot == null }
+
+    private fun externalLocation(executable: String): String? {
         if (executable !in ALLOWED_EXECUTABLES) return null
         if (executable != executable.substringAfterLast('/').substringAfterLast('\\')) return null
         if (executable.endsWith(".bat", true) || executable.endsWith(".cmd", true) || executable.endsWith(".exe", true)) return null

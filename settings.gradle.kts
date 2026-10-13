@@ -11,7 +11,10 @@ dependencyResolutionManagement {
         mavenCentral()
         exclusiveContent {
             forRepository { google() }
-            filter { includeGroup("com.android.tools.smali") }
+            filter {
+                includeGroup("com.android.tools.smali")
+                includeModule("com.android.tools", "r8")
+            }
         }
     }
 }

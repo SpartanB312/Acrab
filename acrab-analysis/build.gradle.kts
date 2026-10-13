@@ -16,3 +16,17 @@ dependencies {
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:${libs.versions.protobufJava.get()}" }
 }
+
+tasks.named<Test>("test") { exclude("**/BundledAndroidConversionTest.class") }
+
+tasks.register<Test>("verifyBundledAndroidTools") {
+    group = "verification"
+    description = "Runs real bundled Android conversion/assembly with generated inputs, never target execution."
+    dependsOn("testClasses", ":acrab-app:prepareAndroidTools")
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    include("**/BundledAndroidConversionTest.class")
+    val tools = project(":acrab-app").layout.buildDirectory.dir("android-tools")
+    inputs.dir(tools)
+    systemProperty("acrab.bundledAndroidTools", tools.get().asFile.absolutePath)
+}

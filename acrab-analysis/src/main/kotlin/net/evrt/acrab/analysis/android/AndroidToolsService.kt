@@ -35,20 +35,20 @@ internal class AndroidToolsService(
     fun dex2jarStatus(): AndroidDex2JarStatusResult {
         val components = listOf("d2j-dex2jar", "dex2jar", "baksmali", "smali", "d8", "dx", "jasmin").associateWith { runner.locate(it) }
         val available = components.values.any { it != null }
-        return AndroidDex2JarStatusResult(available, if (available) "detected-on-path" else "unavailable", components, "PATH allowlist", listOf("android_dex2jar_convert", "android_baksmali_convert", "android_smali_assemble", "android_jar2dex_convert", "android_jar2jasmin_convert", "android_jasmin2jar_convert"), if (available) emptyList() else listOf("No allowlisted Android conversion executable was found; built-in verification and checksum tools remain available."))
+        return AndroidDex2JarStatusResult(available, if (!available) "unavailable" else if (runner.bundledRoot != null) "bundled-java" else "trusted-root", components, runner.bundledRoot?.toString() ?: "Explicit trusted roots", listOf("android_dex2jar_convert", "android_baksmali_convert", "android_smali_assemble", "android_jar2dex_convert", "android_jar2jasmin_convert", "android_jasmin2jar_convert"), if (available) emptyList() else listOf("No allowlisted Android conversion tool was found; built-in verification and checksum tools remain available."))
     }
 
     fun catalog(): AndroidDexToolsCatalogResult = AndroidDexToolsCatalogResult(
-        sourceDirectory = null,
-        bundledArtifact = "external trusted-root tools only; no bundled executable is shipped",
+        sourceDirectory = runner.bundledRoot?.toString(),
+        bundledArtifact = if (runner.bundledRoot != null) "Bundled Java toolchains; fixed versions and isolated verified classpaths" else "Bundled tools not selected/detected; using explicit trusted roots when configured",
         tools = listOf(
-            AndroidDexToolInfo("d2j-dex2jar", "d2j-dex2jar", "com.googlecode.dex2jar.tools.Dex2jarCmd", "dex-to-jar", "android_dex2jar_convert", "Optional external converter."),
-            AndroidDexToolInfo("baksmali", "baksmali", "com.android.tools.smali.baksmali.Main", "dex-to-smali", "android_baksmali_convert", "Optional external converter."),
-            AndroidDexToolInfo("smali", "smali", "com.android.tools.smali.smali.Main", "smali-to-dex", "android_smali_assemble", "Optional external assembler."),
-            AndroidDexToolInfo("d8", "d8", "com.android.tools.r8.D8", "jar-to-dex", "android_jar2dex_convert", "Optional external converter."),
+            AndroidDexToolInfo("d2j-dex2jar", "d2j-dex2jar", "com.googlecode.dex2jar.tools.Dex2jarCmd", "dex-to-jar", "android_dex2jar_convert", "Bundled Java converter; explicit trusted roots may override it."),
+            AndroidDexToolInfo("baksmali", "baksmali", "com.android.tools.smali.baksmali.Main", "dex-to-smali", "android_baksmali_convert", "Bundled Java disassembler; explicit trusted roots may override it."),
+            AndroidDexToolInfo("smali", "smali", "com.android.tools.smali.smali.Main", "smali-to-dex", "android_smali_assemble", "Bundled Java assembler; explicit trusted roots may override it."),
+            AndroidDexToolInfo("d8", "d8", "com.android.tools.r8.D8", "jar-to-dex", "android_jar2dex_convert", "Bundled D8; platform/application libraries remain input-specific."),
             AndroidDexToolInfo("jasmin", "jasmin", "jasmin.Main", "jasmin-assemble", "android_jasmin2jar_convert", "Assembler-only tool root entry; Jar-to-Jasmin disassembly is unsupported and creates no artifact."),
         ),
-        warnings = listOf("External tools resolve only through the explicitly configured trusted tool root; Windows .cmd/.bat entry points are selected by logical tool ID and invoked with validated argument lists, rejecting control characters and shell metacharacters."),
+        warnings = listOf("Bundled tools use the current JVM, allowlisted main classes and checksum-verified isolated classpaths; they never use shell wrappers or download at runtime. Explicit external roots disable bundled fallback; Windows batch overrides retain argument safety checks."),
     )
 
     suspend fun asmVerify(projectId: String): AndroidAsmVerifyResult {
@@ -238,7 +238,18 @@ internal class AndroidToolsService(
         }
         val work = workDirectory(project, "jasmin2jar")
         val classes = work.resolve("classes").also(Files::createDirectories)
-        val arguments = listOf("-d", classes.toString()) + snapshot.jasminFiles.map(Path::toString)
+        val sources = work.resolve("sources").also(Files::createDirectories)
+        // Classic Jasmin's scanner can loop at EOF without a final newline; normalize only staged copies.
+        val staged = snapshot.jasminFiles.map { source ->
+            val relative = if (Files.isRegularFile(input)) source.fileName else input.relativize(source)
+            val target = sources.resolve(relative).normalize()
+            require(target.startsWith(sources)) { "Jasmin staging path escaped its root." }
+            Files.createDirectories(target.parent)
+            val bytes = readBounded(source)
+            Files.write(target, if (bytes.lastOrNull() == '\n'.code.toByte()) bytes else bytes + '\n'.code.toByte())
+            target.toString()
+        }
+        val arguments = listOf("-d", classes.toString()) + staged
         val command = runner.run("jasmin", arguments, work)
         fun failure(message: String) = AndroidJasmin2JarResult(projectId, input.toString(), null, false, false, snapshot.jasminFiles.size, 0, 0, command, listOf(message))
         if (!command.completed || command.timedOut) return failure("External assembler did not complete; partial output is rejected.")

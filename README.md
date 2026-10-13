@@ -1,4 +1,4 @@
-# Acrab
+# Beta Scorpii
 
 Acrab 1.4 was formerly known as **Antares Lite**.
 

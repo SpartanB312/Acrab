@@ -12,11 +12,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "antares-lite"
+rootProject.name = "acrab"
 
 include(
-    ":antares-lite-core",
-    ":antares-lite-analysis",
-    ":antares-lite-mcp",
-    ":antares-lite-app",
+    ":acrab-core",
+    ":acrab-analysis",
+    ":acrab-mcp",
+    ":acrab-app",
 )

@@ -1,5 +1,0 @@
-interface:
-  display_name: "Antares Lite"
-  short_description: "JVM evidence, reconstruction and guarded method patches"
-  default_prompt: "Use $antares-lite to inspect this JVM archive or prepare the requested method patch, following the relevant specialist workflow and preserving source identity, evidence limits and the authorized stage."
-

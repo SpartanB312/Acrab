@@ -8,8 +8,8 @@ plugins {
     kotlin("plugin.serialization") version libs.versions.kotlin.get() apply false
 }
 
-group = "net.evrt.antarelite"
-version = "1.3.1"
+group = "net.evrt.acrab"
+version = "1.4"
 
 subprojects {
     group = rootProject.group

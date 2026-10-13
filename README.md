@@ -1,6 +1,8 @@
-# Antares Lite
+# Acrab
 
-Antares Lite is a JVM bytecode analysis and guarded method-patching server for
+Acrab 1.4 was formerly known as **Antares Lite**.
+
+Acrab is a JVM bytecode analysis and guarded method-patching server for
 the Model Context Protocol (MCP). It lets coding agents and human reviewers
 inspect JAR archives, gather exact method evidence, triage obfuscation
 patterns, reconstruct Java source, and prepare controlled method patches.
@@ -11,7 +13,7 @@ never modifies an imported archive. Method patching is a draft, preview, and
 apply workflow that publishes a new artifact only after identity and verifier
 checks pass.
 
-## Why Antares Lite
+## Why Acrab
 
 - **MCP-native:** exposes stdio and loopback-first HTTP JSON-RPC transports
   with complete tool schemas.
@@ -42,17 +44,17 @@ checks pass.
 Build and install the runnable distribution:
 
 ```powershell
-.\gradlew.bat :antares-lite-app:installDist
+.\gradlew.bat :acrab-app:installDist
 ```
 
 ```sh
-./gradlew :antares-lite-app:installDist
+./gradlew :acrab-app:installDist
 ```
 
 The launcher is created at:
 
 ```text
-antares-lite-app/build/install/antares-lite/bin/
+acrab-app/build/install/acrab/bin/
 ```
 
 ### Connect With stdio
@@ -63,14 +65,14 @@ full launcher path in the client configuration, for example:
 ```json
 {
   "mcpServers": {
-    "antares-lite": {
-      "command": "/absolute/path/to/Antares-Lite/antares-lite-app/build/install/antares-lite/bin/antares-lite"
+    "acrab": {
+      "command": "/absolute/path/to/Acrab/acrab-app/build/install/acrab/bin/acrab"
     }
   }
 }
 ```
 
-On Windows, use the `antares-lite.bat` launcher path. The process reads one
+On Windows, use the `acrab.bat` launcher path. The process reads one
 newline-delimited JSON-RPC 2.0 object per line from stdin and writes one JSON
 response per line to stdout.
 
@@ -79,11 +81,11 @@ response per line to stdout.
 Start the HTTP transport:
 
 ```powershell
-.\antares-lite-app\build\install\antares-lite\bin\antares-lite.bat http
+.\acrab-app\build\install\acrab\bin\acrab.bat http
 ```
 
 ```sh
-./antares-lite-app/build/install/antares-lite/bin/antares-lite http
+./acrab-app/build/install/acrab/bin/acrab http
 ```
 
 Send JSON-RPC requests to:
@@ -106,7 +108,7 @@ with `DELETE /mcp`. GET streams are available only for legacy sessions;
 streams are not resumable.
 
 Connect your MCP client directly to this endpoint. See the
-[quickstart](docs/antares-lite-manual/USER-QUICKSTART.md) for complete examples.
+[quickstart](docs/acrab-manual/USER-QUICKSTART.md) for complete examples.
 
 ### First Analysis Steps
 
@@ -120,12 +122,12 @@ Connect your MCP client directly to this endpoint. See the
    with `class_summary`, and request exact bytecode evidence with
    `method_bytecode`.
 
-The [user quickstart](docs/antares-lite-manual/USER-QUICKSTART.md) contains
+The [user quickstart](docs/acrab-manual/USER-QUICKSTART.md) contains
 complete JSON-RPC examples.
 
 ## Tool Surface
 
-Antares Lite registers 34 endpoints: 32 domain tools plus the `health` and
+Acrab registers 34 endpoints: 32 domain tools plus the `health` and
 `list_tools` platform endpoints. Runtime `tools/list` is always authoritative.
 
 | Area | Tools |
@@ -142,7 +144,7 @@ Antares Lite registers 34 endpoints: 32 domain tools plus the `health` and
 | Guarded patching | `patch_catalog`, `method_patch_draft`, `method_patch_preview`, `apply_method_patch` |
 | Platform status | `health`, `list_tools` |
 
-See the [tool reference](docs/antares-lite-manual/TOOL-REFERENCE.md) for
+See the [tool reference](docs/acrab-manual/TOOL-REFERENCE.md) for
 arguments, result fields, bounds, state effects, and interpretation limits.
 
 ## Guarded Method Patching
@@ -157,7 +159,7 @@ rewrites.
    returned by the server.
 5. Preview the prepared class, review its operation diff and verifier
    diagnostics, and receive a single-use preview ID.
-6. Apply the exact authorized request. Antares Lite writes a new artifact and
+6. Apply the exact authorized request. Acrab writes a new artifact and
    output project; the imported archive remains unchanged.
 
 The patch verifier performs offline structural and dataflow checks. It does
@@ -165,7 +167,7 @@ not prove runtime linking, deployment compatibility, or intended behavior.
 Signed JARs and target multi-release overrides are unsupported.
 
 For operation schemas, recovery rules, and postchecks, see the
-[method patching guide](docs/antares-lite-manual/METHOD-PATCHING.md).
+[method patching guide](docs/acrab-manual/METHOD-PATCHING.md).
 
 ## Specialist Workflows
 
@@ -181,16 +183,16 @@ systems or server processes.
 | Vega | Decompiler | Reconstruction, backend comparison, and extraction caveats |
 | Altair | Bytecode patcher | Drafts, previews, authorized application, and output checks |
 
-Start with the [Antares Lite skill](skills/antares-lite/SKILL.md). The
-[specialist workflow guide](docs/antares-lite-manual/SPECIALIST-WORKFLOWS.md)
+Start with the [Acrab skill](skills/acrab/SKILL.md). The
+[specialist workflow guide](docs/acrab-manual/SPECIALIST-WORKFLOWS.md)
 explains task decomposition, evidence levels, handoffs, conflict resolution,
 and completion criteria. Clients without subagent support can follow the same
 workflows directly. Roles are optional responsibilities, not a pipeline that
 runs every tool. Choose checks for the requested result, preserve user model
 and single-agent choices, and delegate only when authorized.
 
-[Intelligence requirements](skills/antares-lite/references/model-routing.md)
-and their [JSON representation](skills/antares-lite/references/model-routing.json)
+[Intelligence requirements](skills/acrab/references/model-routing.md)
+and their [JSON representation](skills/acrab/references/model-routing.json)
 help the main agent select an appropriately capable supported model for each
 role. The requirements describe task demands, not measured model scores.
 
@@ -212,7 +214,7 @@ role. The requirements describe task demands, not measured model scores.
   does not establish behavioral equivalence. Evidence checksums detect
   alteration, not author authenticity or semantic correctness.
 - HTTP binds to loopback by default. Non-loopback binding requires
-  `ANTARES_LITE_ALLOW_REMOTE=true`, a configured bearer token, explicit allowed
+  `ACRAB_ALLOW_REMOTE=true`, a configured bearer token, explicit allowed
   hosts, and a TLS-protected trust boundary. Host and Origin checks also apply
   on loopback. Browser origins are restricted to same-origin or an explicit
   allowlist; forwarded headers are not trusted.
@@ -228,18 +230,18 @@ role. The requirements describe task demands, not measured model scores.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `ANTARES_LITE_HTTP_HOST` | `127.0.0.1` | HTTP bind address |
-| `ANTARES_LITE_HTTP_PORT` | `8080` | HTTP port |
-| `ANTARES_LITE_ALLOW_REMOTE` | `false` | Permit non-loopback binding |
-| `ANTARES_LITE_MAX_HTTP_REQUEST_BYTES` | `180005548` | Maximum UTF-8 request body size, including Base64 overhead |
-| `ANTARES_LITE_HTTP_AUTH_TOKEN` | unset | Require `Authorization: Bearer <token>`; mandatory for remote binding |
-| `ANTARES_LITE_HTTP_ALLOWED_HOSTS` | `127.0.0.1,localhost,::1` | Accepted Host names, without ports |
-| `ANTARES_LITE_HTTP_ALLOWED_ORIGINS` | empty | Additional browser origins, comma-separated |
+| `ACRAB_HTTP_HOST` | `127.0.0.1` | HTTP bind address |
+| `ACRAB_HTTP_PORT` | `8080` | HTTP port |
+| `ACRAB_ALLOW_REMOTE` | `false` | Permit non-loopback binding |
+| `ACRAB_MAX_HTTP_REQUEST_BYTES` | `180005548` | Maximum UTF-8 request body size, including Base64 overhead |
+| `ACRAB_HTTP_AUTH_TOKEN` | unset | Require `Authorization: Bearer <token>`; mandatory for remote binding |
+| `ACRAB_HTTP_ALLOWED_HOSTS` | `127.0.0.1,localhost,::1` | Accepted Host names, without ports |
+| `ACRAB_HTTP_ALLOWED_ORIGINS` | empty | Additional browser origins, comma-separated |
 
 Projects are stored under `data` relative to the server working directory.
 Imported archives have a separate 128 MiB decoded-size limit. The default HTTP
 body budget accommodates its Base64 encoding plus 1 MiB of envelope overhead.
-See [HTTP configuration](docs/antares-lite-manual/USER-QUICKSTART.md#http-configuration)
+See [HTTP configuration](docs/acrab-manual/USER-QUICKSTART.md#http-configuration)
 for worker, stream, session and timeout settings. Choose limits for the JVM
 heap and expected archive sizes.
 
@@ -267,23 +269,23 @@ Not supported:
 
 ## Documentation
 
-- [Manual overview](docs/antares-lite-manual/README.md)
-- [User quickstart](docs/antares-lite-manual/USER-QUICKSTART.md)
-- [Tool reference](docs/antares-lite-manual/TOOL-REFERENCE.md)
-- [Specialist workflows](docs/antares-lite-manual/SPECIALIST-WORKFLOWS.md)
-- [Method patching](docs/antares-lite-manual/METHOD-PATCHING.md)
-- [Static analysis capabilities](docs/antares-lite-manual/ANALYSIS-AND-VERIFICATION.md)
-- [Agent skill entrypoint](skills/antares-lite/SKILL.md)
+- [Manual overview](docs/acrab-manual/README.md)
+- [User quickstart](docs/acrab-manual/USER-QUICKSTART.md)
+- [Tool reference](docs/acrab-manual/TOOL-REFERENCE.md)
+- [Specialist workflows](docs/acrab-manual/SPECIALIST-WORKFLOWS.md)
+- [Method patching](docs/acrab-manual/METHOD-PATCHING.md)
+- [Static analysis capabilities](docs/acrab-manual/ANALYSIS-AND-VERIFICATION.md)
+- [Agent skill entrypoint](skills/acrab/SKILL.md)
 
 ## Project Layout
 
 ```text
-antares-lite-core       Registry, configuration, and runtime context
-antares-lite-analysis   Indexing, evidence, finders, decompilation, patching
-antares-lite-mcp        stdio and HTTP JSON-RPC transports
-antares-lite-app        Tool registration, launcher, and distribution assembly
-skills/antares-lite     Coordinating skill, specialist skills, and workflows
-docs/antares-lite-manual  User, tool, workflow, and patching documentation
+acrab-core        Registry, configuration, and runtime context
+acrab-analysis    Indexing, evidence, finders, decompilation, patching
+acrab-mcp         stdio and HTTP JSON-RPC transports
+acrab-app         Tool registration, launcher, and distribution assembly
+skills/acrab      Coordinating skill, specialist skills, and workflows
+docs/acrab-manual  User, tool, workflow, and patching documentation
 ```
 
 ## Development
@@ -297,12 +299,12 @@ Run the complete build and test suite:
 Create installable and distributable artifacts:
 
 ```powershell
-.\gradlew.bat :antares-lite-app:installDist :antares-lite-app:distZip :antares-lite-app:distTar
+.\gradlew.bat :acrab-app:installDist :acrab-app:distZip :acrab-app:distTar
 ```
 
 Distribution archives are written to
-`antares-lite-app/build/distributions/`. The current release version is
-**1.3.1**. ZIP/TAR packages include the manual, skills, model routing references,
+`acrab-app/build/distributions/`. The current release version is
+**1.4**. ZIP/TAR packages include the manual, skills, model routing references,
 agent templates, generated catalog and license.
 
 ## License

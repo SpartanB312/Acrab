@@ -68,7 +68,7 @@ test-fixtures/
 tool-verification/
 docs/method-patch-repair-plan.md
 docs/RELIABILITY-REPAIR-PLAN.md
-antares-lite-improvements.md
+acrab-improvements.md
 /scripts/*
 **/__pycache__/
 *.pyc

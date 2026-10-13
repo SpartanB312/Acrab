@@ -1,4 +1,8 @@
-# Deobfuscating `snake.jar` with MiniMax M3.1 Flash and Antares Lite 1.2.1
+# Deobfuscating `snake.jar` with MiniMax M3.1 Flash and Acrab
+
+**Project naming note:** The project is now **Acrab 1.4**, formerly known as **Antares Lite**.
+This historical experiment used **Antares Lite 1.2.1**. Tool references below use the current name Acrab;
+the experiment's recorded versions, outputs, and findings remain unchanged.
 
 **Target:** a 6,498-byte Java SE archive containing seven classes, heavily obfuscated with **Zelix KlassMaster (ZKM)**.\
 **Goal:** remove string/constant obfuscation, control-flow obfuscation, and identifier renaming; reconstruct readable
@@ -46,12 +50,12 @@ unspecified sample.
 | Property                 | Value                                                              |
 |--------------------------|--------------------------------------------------------------------|
 | Model                    | **MiniMax M3.1 Flash Preview**                                     |
-| Antares Lite             | **1.2.1**                                                          |
+| Acrab (then Antares Lite) | **1.2.1**                                                          |
 | Obfuscator               | **Zelix KlassMaster (ZKM)25 obfuscation**                          |
 | Target                   | [`case/snake.jar`](case/snake.jar), 6,498 bytes                    |
 | Program size             | 7 classes, 28 methods, 23 fields                                   |
 | Coordinator              | 1 MiniMax M3.1 Flash agent                                         |
-| Specialists              | 5 same-model Antares Lite specialists                              |
+| Specialists              | 5 same-model Acrab specialists                                     |
 | Specialists used         | Sirius, Rigel, Mira, Vega, Altair                                  |
 | Independent verification | 1 separate verifier/auditor agent                                  |
 | Final compilation        | **PASS**                                                           |
@@ -59,7 +63,7 @@ unspecified sample.
 | Runtime differential     | **PASS after one verifier-detected semantic defect was corrected** |
 | Primary deliverable      | [`case/snake-deobf-src.zip`](case/snake-deobf-src.zip)             |
 
-The five specialists followed Antares Lite's supplied role contracts:
+The five specialists followed Acrab's supplied role contracts:
 
 - **Sirius** — JVM indexing and identity/retrieval
 - **Rigel** — bytecode, CFG, and bounded analysis
@@ -124,8 +128,8 @@ This became relevant later when a specialist reported that the server-side artif
 recomputation showed that no mismatch existed; the specialist had introduced a transcription error while comparing the
 strings.
 
-The analysis environment used JDK 25.0.1 and Antares Lite 1.2.1 over its HTTP transport so multiple specialist processes
-could connect concurrently.
+The analysis environment used JDK 25.0.1 and Antares Lite 1.2.1 (now named Acrab) over its HTTP transport so multiple
+specialist processes could connect concurrently.
 
 ---
 
@@ -253,7 +257,7 @@ The reconstructed source assigns semantic names and moves the code into a `snake
 
 All seven classes, 28 methods, and 23 fields were given readable names in the source reconstruction.
 
-Antares Lite's bytecode patch schema does **not** provide arbitrary class, method, or field renaming. Identifier
+Acrab's bytecode patch schema does **not** provide arbitrary class, method, or field renaming. Identifier
 recovery was therefore performed at the reconstructed-source layer rather than through the patched JAR.
 
 The rebuilt source artifact is consequently the primary complete deobfuscation output.
@@ -413,7 +417,7 @@ This detail later became the decisive behavioral differential used to detect the
 
 # 4. Bytecode-level patching
 
-Antares Lite's schema-v2 patch protocol was used to remove two instruction sequences proven dead.
+Acrab's schema-v2 patch protocol was used to remove two instruction sequences proven dead.
 
 The protocol is:
 
@@ -585,7 +589,7 @@ A compiling reconstruction can still be semantically wrong, as the later verifie
 
 ## 6.2 Re-import and finder scan
 
-The rebuilt JAR was imported back into Antares Lite and scanned again.
+The rebuilt JAR was imported back into Acrab and scanned again.
 
 | Check                          |             Original |       Rebuilt |
 |--------------------------------|---------------------:|--------------:|
@@ -605,7 +609,7 @@ scanComplete: true
 truncated: false
 ```
 
-The result therefore means that **Antares Lite's supported finders detected no remaining instances of those patterns in
+The result therefore means that **Acrab's supported finders detected no remaining instances of those patterns in
 the rebuilt artifact**.
 
 It does not establish the stronger proposition that the program is “free of all possible obfuscation” under every
@@ -933,7 +937,7 @@ Two unrelated operational failures were also recorded rather than hidden.
 
 ### Killing the analysis server
 
-A cleanup command targeting all Java processes also terminated the Antares Lite server.
+A cleanup command targeting all Java processes also terminated the Acrab server.
 
 After restart, the service and stored analysis state were checked before work continued.
 
@@ -954,7 +958,7 @@ The unexplained anomaly was therefore not promoted to a technical conclusion.
 
 The specialist environment did not expose an MCP client directly.
 
-A small PowerShell wrapper was therefore written to communicate with Antares Lite through JSON-RPC.
+A small PowerShell wrapper was therefore written to communicate with Acrab through JSON-RPC.
 
 It handled:
 
@@ -1071,7 +1075,7 @@ Deliverables should be tested in the form users will receive them.
 
 `patch_catalog` made several limits explicit before patching began.
 
-That prevented later assumptions that Antares Lite could directly rename arbitrary JVM entities or rewrite complete
+That prevented later assumptions that Acrab could directly rename arbitrary JVM entities or rewrite complete
 method bodies.
 
 Known absence of a capability is preferable to discovering that absence halfway through a transformation.
@@ -1225,7 +1229,7 @@ so the same build logic works from the analysis working tree and from the distri
 
 # 11. Tool capability boundaries
 
-Antares Lite's patch catalog exposes six relevant mutation operations:
+Acrab's patch catalog exposes six relevant mutation operations:
 
 ```text
 replace_insn
@@ -1293,7 +1297,7 @@ verified: true
 verificationScope: asm-static
 ```
 
-means that the result passed the scope of Antares Lite's static ASM-based verifier.
+means that the result passed the scope of Acrab's static ASM-based verifier.
 
 It does **not** prove:
 
@@ -1310,7 +1314,7 @@ This distinction is why independent runtime differential verification was still 
 
 The primary reverse-engineering workflow analyzed the original target statically.
 
-During that main analysis, the original target classes were not loaded or initialized by Antares Lite.
+During that main analysis, the original target classes were not loaded or initialized by Acrab.
 
 One explicit exception occurred during verification.
 
@@ -1375,8 +1379,8 @@ Success here does not establish equivalent performance against arbitrary:
 
 ### Finder-zero is tool-relative
 
-A post-rebuild finder count of zero means that Antares Lite's current supported finders reported no matching patterns
-under complete scans.
+A post-rebuild finder count of zero means that the Acrab version used in this experiment reported no matching patterns
+with its supported finders under complete scans.
 
 It does not prove that no obfuscation of any kind exists under a broader definition.
 
@@ -1407,7 +1411,7 @@ The following machine-local information was removed:
 
 - absolute host paths;
 - local Windows account names;
-- Antares project/session identifiers;
+- Acrab project/session identifiers;
 - server endpoint and port;
 - process IDs;
 - the number of locally retained project records.
@@ -1443,7 +1447,7 @@ That would be false.
 
 A more accurate summary is:
 
-> **MiniMax M3.1 Flash, operating through Antares Lite's specialist and verification workflow, produced a src-ready
+> **MiniMax M3.1 Flash, operating through Acrab's specialist and verification workflow, produced a src-ready
 reconstruction of a heavily ZKM-obfuscated JVM program despite multiple local reasoning failures. Independent evidence
 and adversarial verification prevented those failures from surviving into the final artifact.**
 

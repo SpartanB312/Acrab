@@ -16,6 +16,7 @@ val packagedManualDocs = listOf(
     "SPECIALIST-WORKFLOWS.md",
     "METHOD-PATCHING.md",
     "ANALYSIS-AND-VERIFICATION.md",
+    "ANDROID.md",
 )
 val acrabSkills = rootProject.layout.projectDirectory.dir("skills/acrab")
 val packagedSkillFiles = listOf(
@@ -27,12 +28,14 @@ val packagedSkillFiles = listOf(
     "specialists/decompiler/**",
     "specialists/evidence-finder/**",
     "specialists/jvm-indexer/**",
+    "specialists/android/**",
     "agents/openai.yaml",
     "agents/acrab-bytecode-analyst.toml",
     "agents/acrab-bytecode-patcher.toml",
     "agents/acrab-decompiler.toml",
     "agents/acrab-evidence-finder.toml",
     "agents/acrab-jvm-indexer.toml",
+    "agents/acrab-android.toml",
 )
 
 val generateToolCatalog by tasks.registering(JavaExec::class) {
@@ -58,6 +61,10 @@ distributions {
             from(acrabManualDocs) {
                 into("docs/acrab-manual")
                 include(packagedManualDocs)
+            }
+            from(rootProject.layout.projectDirectory.dir("licenses")) {
+                into("licenses")
+                include("AOSP-Apache-2.0.txt", "AOSP-NOTICE.txt")
             }
             from(acrabSkills) {
                 into("skills/acrab")

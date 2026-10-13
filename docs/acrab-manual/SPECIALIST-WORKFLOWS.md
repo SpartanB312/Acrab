@@ -1,6 +1,6 @@
 # Specialist Workflows
 
-The five specialists organize evidence responsibilities over shared Acrab
+The six specialists organize evidence responsibilities over shared Acrab
 MCP tools. Agent templates do not enforce a tool allowlist, install themselves
 or start a server. The coordinator retains user communication, authorization,
 scope and final synthesis.
@@ -24,6 +24,7 @@ loads its skill, dedicated workflow and
 | Mira | `acrab-evidence-finder` | [Finders](../../skills/acrab/specialists/evidence-finder/SKILL.md) | [Triage and collect](../../skills/acrab/workflows/evidence-finder.md) |
 | Vega | `acrab-decompiler` | [Reconstruction](../../skills/acrab/specialists/decompiler/SKILL.md) | [Reconstruct and qualify](../../skills/acrab/workflows/decompiler.md) |
 | Altair | `acrab-bytecode-patcher` | [Patching](../../skills/acrab/specialists/bytecode-patcher/SKILL.md) | [Draft, review, publish](../../skills/acrab/workflows/bytecode-patcher.md) |
+| Canopus | `acrab-android` | [Android](../../skills/acrab/specialists/android/SKILL.md) | [Inspect and convert](../../skills/acrab/workflows/android.md) |
 
 The `agents/acrab-*.toml` files are host-specific agent configuration
 templates. Register them through the host's supported agent configuration and
@@ -51,6 +52,7 @@ scores. Retrieval, analysis and mutation can require different capabilities.
 | Rigel | 4 | 4 | 5 |
 | Vega | 3 | 4 | 5 |
 | Altair | 4 | 4 | 5 |
+| Canopus | 3 | 4 | 5 |
 
 For authorized delegation that needs model selection, use
 [routing guidance](../../skills/acrab/references/model-routing.md) and
@@ -81,6 +83,9 @@ uses the host's supported settings and requires authorization.
 | Preview a concrete change | Altair drafts and reviews preview | Rigel when source effect needs clarification | Bound request, hashes, diff and static checks |
 | Apply that change | Altair uses existing authorization and preview | Index/check the output project and requested change | Artifact hash, verified output, successful indexing and observed change |
 | Archive audit | Sirius establishes identity, then bounded independent lanes | Cross-check only material claims | Declared category/class/method coverage and remaining gaps |
+| Android method evidence | Canopus establishes identity and exact DEX/descriptor | Focused reference/candidate check if needed | DEX entries, code-unit coordinates and bounded observations |
+| Manifest question | Canopus inspects manifest only | Raw/findings when needed | Parser/module identity, unknowns and inference limits |
+| Requested conversion | Canopus checks trusted converter and output | Import derived JAR for Sirius only if needed | Validated artifact, source/output identity and entry coverage |
 
 Independent finder and reconstruction questions can run in parallel after
 identity is established. A finder-to-bytecode check is dependent work; pass

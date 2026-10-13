@@ -1,0 +1,11 @@
+Acrab includes generated code from Android Open Source Project AAPT2 schemas.
+
+Copyright (C) 2016 The Android Open Source Project
+Licensed under the Apache License, Version 2.0; see AOSP-Apache-2.0.txt.
+
+Source revision: 02d8919614b7920aa2c5c3820be77bba8c54846f
+https://android.googlesource.com/platform/frameworks/base/+/02d8919614b7920aa2c5c3820be77bba8c54846f/tools/aapt2/
+
+Configuration.proto is unchanged. Resources.proto normalizes line endings
+and changes the sibling import to Configuration.proto. Java code is generated
+with protobuf 4.33.2. Original schema copyright/license headers are retained.

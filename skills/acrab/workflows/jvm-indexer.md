@@ -10,6 +10,11 @@ Accept either archive bytes available to the MCP client or an existing
 does not require import. A server-local pathname is not an import parameter;
 `create_project` requires `fileName` and `archiveBase64`.
 
+For an Android conversion artifact, `import_android_artifact` can import a
+project-owned derived JAR without client-side file access. Use the returned new
+project/hash, not the Android source ID. Route original DEX/APK/AAB and manifest
+questions to Canopus; do not call JVM indexing on them.
+
 ## Procedure and checks
 
 1. **Identify.** For an existing project, use supplied trustworthy record

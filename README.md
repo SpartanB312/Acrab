@@ -2,10 +2,11 @@
 
 Acrab 1.4 was formerly known as **Antares Lite**.
 
-Acrab is a JVM bytecode analysis and guarded method-patching server for
+Acrab is a JVM and Android static-analysis and guarded JVM method-patching server for
 the Model Context Protocol (MCP). It lets coding agents and human reviewers
 inspect JAR archives, gather exact method evidence, triage obfuscation
-patterns, reconstruct Java source, and prepare controlled method patches.
+patterns, reconstruct Java source, prepare controlled method patches, inspect
+DEX/APK/AAB and manifests, and perform requested trusted-tool conversions.
 
 The server is intentionally conservative. It does not execute target code, it
 keeps facts, heuristic candidates, and reconstructed source separate, and it
@@ -27,7 +28,9 @@ checks pass.
 - **Guarded patching:** binds every operation to source instruction indexes,
   archive checksums, method fingerprints, debug metadata, and a single-use
   preview.
-- **Agent-ready:** ships a main-agent skill, five specialist roles, task-focused
+- **Android evidence:** ports Antares 1.3.5 DEX/APK/AAB and manifest analysis,
+  plus optional trusted dex2jar, smali/baksmali, D8/dx and Jasmin workflows.
+- **Agent-ready:** ships a main-agent skill, six specialist roles, task-focused
   workflows, role-specific intelligence requirements and model routing guidance
   for authorized delegation.
 - **Traceable evidence:** binds method evidence to source hashes and records
@@ -114,10 +117,12 @@ Connect your MCP client directly to this endpoint. See the
 
 1. Connect the MCP client using its supported protocol, then call `tools/list`
    to inspect the schemas exposed by the connected server.
-2. Use `create_project` to import a JAR as Base64 bytes.
+2. Use `create_project` to import a JAR, DEX/APK/AAB, multidex ZIP or manifest
+   XML as Base64 bytes, preserving the original filename extension.
 3. Record the returned `projectId` and SHA-256 checksum.
-4. Verify identity with `verify_archive_identity` and index the archive. Use
-   `archive_summary` when inventory is needed.
+4. Verify identity with `verify_archive_identity`. Index JARs and use
+   `archive_summary` for JVM inventory; use `android_dex_summary` for Android
+   bytecode or `android_manifest_summary` for manifest questions, without a JVM index.
 5. Locate a class with `list_classes` or `search_classes`, inspect its methods
    with `class_summary`, and request exact bytecode evidence with
    `method_bytecode`.
@@ -127,7 +132,7 @@ complete JSON-RPC examples.
 
 ## Tool Surface
 
-Acrab registers 34 endpoints: 32 domain tools plus the `health` and
+Acrab registers 56 endpoints: 54 domain tools plus the `health` and
 `list_tools` platform endpoints. Runtime `tools/list` is always authoritative.
 
 | Area | Tools |
@@ -143,6 +148,8 @@ Acrab registers 34 endpoints: 32 domain tools plus the `health` and
 | Aggregation | `evidence_summary`, `finder_catalog` |
 | Guarded patching | `patch_catalog`, `method_patch_draft`, `method_patch_preview`, `apply_method_patch` |
 | Platform status | `health`, `list_tools` |
+| Android evidence | DEX inventory, classes, strings, invocations, exact instructions, sensitive-API candidates and manifest summary/raw/findings |
+| Android artifacts | Trusted conversion/assembly, ASM checks, checksum repair, class headers and `import_android_artifact` |
 
 See the [tool reference](docs/acrab-manual/TOOL-REFERENCE.md) for
 arguments, result fields, bounds, state effects, and interpretation limits.
@@ -171,7 +178,7 @@ For operation schemas, recovery rules, and postchecks, see the
 
 ## Specialist Workflows
 
-The bundled agent resources organize analysis into five roles. They are
+The bundled agent resources organize analysis into six roles. They are
 client-side instructions over the same MCP registry, not separate permission
 systems or server processes.
 
@@ -182,6 +189,7 @@ systems or server processes.
 | Mira | Evidence finder | Obfuscation candidates, pagination, and coverage accounting |
 | Vega | Decompiler | Reconstruction, backend comparison, and extraction caveats |
 | Altair | Bytecode patcher | Drafts, previews, authorized application, and output checks |
+| Canopus | Android analyst | DEX/APK/AAB and manifest evidence, authorized conversion and artifact handoffs |
 
 Start with the [Acrab skill](skills/acrab/SKILL.md). The
 [specialist workflow guide](docs/acrab-manual/SPECIALIST-WORKFLOWS.md)
@@ -225,6 +233,10 @@ role. The requirements describe task demands, not measured model scores.
   Reconcile an uncertain write outcome before retrying.
 - Preview IDs bind source identity, canonical request, engine version, and
   prepared class bytes, and can be consumed only once.
+- Android conversions run only explicitly configured trusted tools. A
+  successful command is not sufficient: output validation and entry coverage
+  matter. Conversion creates an artifact, not an in-place rewrite or automatic
+  new project. Read-only analysis does not authorize conversion or execution.
 
 ## Configuration
 
@@ -245,6 +257,11 @@ See [HTTP configuration](docs/acrab-manual/USER-QUICKSTART.md#http-configuration
 for worker, stream, session and timeout settings. Choose limits for the JVM
 heap and expected archive sizes.
 
+Android conversion settings use `ACRAB_ANDROID_*`; see the
+[Android guide](docs/acrab-manual/ANDROID.md#configuration). No converter is
+required for static DEX or manifest analysis, and no converter executable is
+bundled. Derived artifacts can enter a new project through the same MCP connection.
+
 ## Scope
 
 Supported:
@@ -256,10 +273,12 @@ Supported:
 - CFR and Vineflower reconstruction
 - Guarded schema v2 method patching
 - stdio and Streamable HTTP MCP transports with request-scoped SSE
+- Static DEX/APK/AAB/multidex and XML/AXML/protobuf manifest inspection
+- Optional trusted Android conversion/assembly and derived-project handoffs
 
 Not supported:
 
-- Android, DEX, or APK-specific analysis
+- Android target execution, APK signing or deployment
 - Target-code execution or dynamic tracing
 - Arbitrary bytecode rewriting
 - Dashboards and REST compatibility APIs
@@ -275,13 +294,14 @@ Not supported:
 - [Specialist workflows](docs/acrab-manual/SPECIALIST-WORKFLOWS.md)
 - [Method patching](docs/acrab-manual/METHOD-PATCHING.md)
 - [Static analysis capabilities](docs/acrab-manual/ANALYSIS-AND-VERIFICATION.md)
+- [Android analysis and conversion](docs/acrab-manual/ANDROID.md)
 - [Agent skill entrypoint](skills/acrab/SKILL.md)
 
 ## Project Layout
 
 ```text
 acrab-core        Registry, configuration, and runtime context
-acrab-analysis    Indexing, evidence, finders, decompilation, patching
+acrab-analysis    JVM/Android evidence, converters, finders, decompilation, patching
 acrab-mcp         stdio and HTTP JSON-RPC transports
 acrab-app         Tool registration, launcher, and distribution assembly
 skills/acrab      Coordinating skill, specialist skills, and workflows
@@ -309,4 +329,7 @@ agent templates, generated catalog and license.
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Project code is released under the [MIT License](LICENSE). Vendored AAPT2
+schemas and their generated code retain the
+[AOSP Apache-2.0 license](licenses/AOSP-Apache-2.0.txt) and
+[notice](licenses/AOSP-NOTICE.txt).

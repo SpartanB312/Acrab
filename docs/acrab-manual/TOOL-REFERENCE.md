@@ -1,9 +1,9 @@
 # Tool Reference
 
 This reference describes the bundled 1.4 server. Use runtime `tools/list` or
-generated `catalog/tools-catalog.json` for full schemas. There are 32 domain
+generated `catalog/tools-catalog.json` for full schemas. There are 54 domain
 tools plus `health` and `list_tools`; registry "analysis tools" include import
-and patching.
+patching and Android artifact creation/import.
 
 ## Call and decode
 
@@ -17,6 +17,10 @@ tool `isError`, then domain status/identity/coverage. HTTP success does not
 establish tool or patch success.
 
 ## Project and retrieval
+
+`create_project` accepts JVM archives, DEX/APK/AAB/multidex ZIP and manifest XML.
+The indexing/retrieval tools in this section are JVM-JAR tools. Use the Android
+tools below for Android projects; importing bytes does not validate them.
 
 | Tool | Required arguments | Optional arguments | Result and bounds |
 | --- | --- | --- | --- |
@@ -231,6 +235,42 @@ checks, lifetime and recovery. Draft prepares no bytes; preview can persist
 bookkeeping but publishes no archive; apply publishes without changing source.
 Apply currently returns `reindexed: false`. Index the output project and record
 that postcheck separately before inspecting its requested change.
+
+## Android tools
+
+All project tools below require `projectId` and verify current stored bytes.
+They do not use the JVM index. Required extra parameters are named explicitly;
+the other listed parameters are optional. See [Android analysis](ANDROID.md)
+for formats, configuration, actual output status fields and authorization.
+
+| Tool | Extra arguments | Result and bounds |
+| --- | --- | --- |
+| `android_dex_summary` | None | Hash, parser, DEX entries and structural counts |
+| `android_list_classes` | `query`, `dexFile`, `limit` | Class array; default 100, range 1-500 |
+| `android_class_summary` | Required `className`; optional `dexFile` | Unambiguous class and exact method descriptors |
+| `android_search_strings` | `query`, `dexFile`, `limit` | Static references; default 100, range 1-500 |
+| `android_search_invocations` | `owner`, `name`, `dexFile`, `limit` | Static calls with source/target descriptors; default 100, range 1-500 |
+| `android_method_bytecode` | Required `className`, `methodName`; optional `descriptor`, `dexFile`, `limit` | Exact DEX evidence, hash and truncation; default 500, range 1-10,000 |
+| `android_find_sensitive_apis` | `limit` | Candidate count, findings, limitations and truncation; default 200, range 1-500 |
+| `android_manifest_summary` | None | Plain/AXML/protobuf observations, module identity and warnings |
+| `android_manifest_raw` | `maxBytes` | UTF-8 or Base64 source with encoding and truncation; default 1,000,000, range 1-4,194,304 |
+| `android_manifest_findings` | None | Manifest hints, not exploitability conclusions |
+| `android_dex2jar_convert` | None | Validated separate JAR through trusted dex2jar; source entry/command coverage |
+| `android_baksmali_convert` | None | Validated smali ZIP through trusted baksmali, counts and local sample files |
+| `android_asm_verify` | None | JVM archive class/method counts, issues and truncation; no runtime proof |
+| `android_dex_recompute_checksum` | None | Separate DEX/archive, count and output paths/checksums |
+| `android_smali_assemble` | Required `inputPath` | Project-local smali tree to validated separate DEX |
+| `android_jar2dex_convert` | None | D8/dx artifact, `outputExists`, DEX format/coverage, min API and version |
+| `android_jar2jasmin_convert` | None | Explicit unsupported/unavailable result, no artifact |
+| `android_jasmin2jar_convert` | Required `inputPath` | Project-local classic Jasmin to validated JAR, class count and command |
+| `android_class_version_switch` | Required `targetMajorVersion` (45-65) | Separate JVM JAR with header changes only |
+| `import_android_artifact` | Required `artifactPath`; optional `expectedSha256` | Project-owned derived artifact copied into a new project record |
+
+`android_dex2jar_status` and `android_dex_tools_catalog` take **no arguments or
+project**. They inspect trusted-root availability and capability contracts, not
+successful conversion. The Android surface contains 21 ported tools and one
+Acrab-specific artifact-import tool. Search arrays have no cursor/total; a
+full-sized result may be capped. Inspect actual schemas before calling.
 
 ## Platform
 

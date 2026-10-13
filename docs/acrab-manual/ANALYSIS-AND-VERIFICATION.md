@@ -9,6 +9,12 @@ Use the capabilities relevant to the requested question. The sections below
 are independent options, not a required analysis pipeline. A bounded answer
 can be complete with explicitly unknown runtime behavior.
 
+The JVM capabilities below do not operate directly on Android bytecode.
+[Android analysis](ANDROID.md) supplies DEX register/code-unit evidence and
+manifest/module observations; it does not imply JVM CFG or stack analysis.
+Conversion to a JAR is an optional authorized artifact workflow, not a required
+step for inspecting Android inputs or proof of semantic equivalence.
+
 ## Identity and evidence
 
 Record the local SHA-256, import's `sha256` and a fresh

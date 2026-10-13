@@ -1,14 +1,14 @@
 ---
 name: acrab
-description: Analyze JVM JARs and prepare guarded method patches through Acrab MCP. Inspect exact bytecode, triage obfuscation, reconstruct source, and coordinate specialists when the task needs them.
+description: Analyze JVM JARs or Android DEX/APK/AAB and manifests through Acrab MCP, prepare guarded JVM method patches, and perform requested trusted-tool conversions. Coordinate specialists when the task needs them.
 ---
 
 # Acrab
 
-This is the main-agent entrypoint for JVM archive analysis and schema v2
-method patching. The five specialists are roles over the same MCP registry;
-templates do not register tools or establish a connection. Android/DEX
-analysis is unsupported. A role can be performed locally; this skill does not
+This is the main-agent entrypoint for JVM and Android analysis, requested
+conversions and schema v2 JVM method patching. The six specialists are roles
+over the same MCP registry; templates do not register tools or establish a
+connection. A role can be performed locally; this skill does not
 authorize spawning agents.
 
 For status or tool discovery, call `health` or `tools/list` directly; no project
@@ -32,7 +32,8 @@ choices; a stronger model does not supply missing evidence.
 ## Establish the task
 
 1. Identify the requested result and scope: inventory, exact method evidence,
-   finder candidates, reconstructed source, preview or patch application.
+   finder candidates, reconstructed source, manifest evidence, conversion,
+   preview or patch application.
    Preserve an explicit backend choice and existing permission to apply.
    Analysis or preview does not authorize application.
 2. Use the connected server and discover `tools/list`; inspect the schema
@@ -40,11 +41,13 @@ choices; a stronger model does not supply missing evidence.
    `2026-07-28` uses per-request metadata, while supported legacy clients
    initialize, send `notifications/initialized` and retain the HTTP session ID.
    HTTP tool responses use SSE; use an MCP client supporting JSON and SSE.
-   `health` answers status questions; `list_tools` lists 32 domain tools,
+   `health` answers status questions; `list_tools` lists 54 domain tools,
    whereas `tools/list` includes both platform endpoints as well.
 3. Reuse a supplied project after `verify_archive_identity`. For a new archive, import
-   and index using the indexing workflow. Establish `projectId`, archive SHA-256
-   and a fresh identity check. Obtain `archive_summary` for inventory questions;
+   using `create_project`. Index JARs using Sirius; route Android inputs to
+   Canopus without JVM indexing. Establish `projectId`, archive SHA-256
+   and a fresh identity check. Use `archive_summary` for JVM inventory or
+   `android_dex_summary` for Android bytecode inventory;
    reuse an existing summary rather than repeating it for every role.
    Capability-only questions need no project.
 4. Choose a bounded next action that can resolve the question. Reuse evidence
@@ -59,6 +62,7 @@ choices; a stronger model does not supply missing evidence.
 | Mira | `acrab-evidence-finder` | Rank and investigate obfuscation signals | [skill](specialists/evidence-finder/SKILL.md), [workflow](workflows/evidence-finder.md) |
 | Vega | `acrab-decompiler` | Obtain or compare reconstructed text | [skill](specialists/decompiler/SKILL.md), [workflow](workflows/decompiler.md) |
 | Altair | `acrab-bytecode-patcher` | Draft, review a preview or publish a patch | [skill](specialists/bytecode-patcher/SKILL.md), [workflow](workflows/bytecode-patcher.md) |
+| Canopus | `acrab-android` | Inspect DEX/APK/AAB/manifests or create an authorized converted artifact | [skill](specialists/android/SKILL.md), [workflow](workflows/android.md) |
 
 Perform a role locally or delegate when authorized and useful. Supply the
 selected skill, its workflow and shared
@@ -83,6 +87,12 @@ temporary files and a cache. Draft does not rewrite a class. Preview prepares
 bytes in memory and may persist idempotency bookkeeping. `apply_method_patch`
 publishes a new archive and project. Do not describe every tool as having no
 filesystem effects.
+
+Android conversions, assembly, checksum repair and class-version changes create
+separate artifacts and may run configured trusted converters. They need
+authorization for the requested output, not JVM patch preview tokens.
+`import_android_artifact` creates a new project from a project-owned artifact.
+Read-only inspection does not authorize conversion or execution.
 
 Use registered tools across roles when they help resolve the task. Preferred
 tools express expertise, not exclusive ownership. Never execute target code,

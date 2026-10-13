@@ -4,6 +4,11 @@ Schema v2 patches one exact method per request, with 1-50 operations. Draft
 validates anchors; preview prepares/verifies class bytes; apply publishes those
 bytes once to a new artifact/project. The input JAR is unchanged.
 
+This workflow patches JVM JAR methods, not DEX instructions or APK manifests.
+Android conversions have their own authorization/output checks and do not use
+these preview tokens. A derived JAR must be imported and addressed by its new
+project/hash before any JVM patch. See [Android handoffs](ANDROID.md#outputs-and-handoff).
+
 Read `patch_catalog` and current `tools/list` schemas. Catalog
 `proofRequired: false` means no proof-token argument is required; it does
 not certify semantic correctness.

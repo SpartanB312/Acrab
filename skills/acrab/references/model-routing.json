@@ -5,7 +5,7 @@
     "1": "Literal tool invocation and field reporting",
     "2": "Schema, identity, exact selection and bounded retrieval",
     "3": "Heuristic triage, coverage and evidence accounting",
-    "4": "JVM dataflow, context and contradictory evidence",
+    "4": "Bytecode evidence, context and contradictory evidence",
     "5": "Complex control flow, cross-method assumptions and semantic review"
   },
   "delegationRequiresAuthorization": true,
@@ -51,6 +51,14 @@
       "recommended": 4,
       "escalated": 5,
       "escalationTriggers": ["Complex semantic reconstruction", "Backend disagreement"]
+    },
+    "acrab-android": {
+      "skill": "specialists/android/SKILL.md",
+      "workflow": "workflows/android.md",
+      "minimum": 3,
+      "recommended": 4,
+      "escalated": 5,
+      "escalationTriggers": ["Conflicting multidex identity", "Manifest inference", "Conversion coverage or semantic risks"]
     },
     "acrab-bytecode-patcher": {
       "skill": "specialists/bytecode-patcher/SKILL.md",

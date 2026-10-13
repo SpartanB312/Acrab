@@ -16,7 +16,7 @@ the same role. Preserve user model, effort, cost and latency constraints.
 | 1 | Follow a specified tool call and report literal fields |
 | 2 | Resolve schemas, identity, exact names and bounded pagination |
 | 3 | Triage heuristics, preserve coverage and track unresolved evidence |
-| 4 | Reason across JVM dataflow, descriptors, contexts and contradictory evidence |
+| 4 | Reason across bytecode evidence, descriptors, contexts and contradictory evidence |
 | 5 | Review complex control flow, cross-method assumptions and semantic risks |
 
 | Role | Minimum | Recommended | Escalated | Escalation conditions |
@@ -27,6 +27,7 @@ the same role. Preserve user model, effort, cost and latency constraints.
 | Rigel / analyst | 4 | 4 | 5 | Complex control flow, cross-method reasoning or conflicting evidence |
 | Vega / decompiler | 3 | 4 | 5 | Complex semantic reconstruction or backend disagreements |
 | Altair / patcher | 4 | 4 | 5 | Complex control-flow changes or uncertain application state |
+| Canopus / Android | 3 | 4 | 5 | Conflicting multidex identity, manifest inference or conversion coverage/semantic risks |
 
 Minimum covers a routine bounded assignment, recommended covers the usual
 role, and escalated covers its difficult cases. Retrieval and semantic review

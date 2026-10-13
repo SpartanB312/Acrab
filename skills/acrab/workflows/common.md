@@ -15,9 +15,10 @@ fixed safety gates.
 
 Supply the user goal, deliverable, exact scope, source identity, existing
 evidence, authorization and a stop condition. Method scope includes class,
-method and JVM descriptor. Discovery scope includes queries/categories and a
-result budget. Unknown inputs may be null; Sirius establishes identity and
-`class_summary` can resolve an ambiguous descriptor before deep analysis.
+method and descriptor; Android scopes also retain `dexFile`. Discovery scope includes queries/categories and a
+result budget. Unknown inputs may be null; Sirius or Canopus establishes identity
+for its format, and `class_summary` / `android_class_summary` can resolve an
+ambiguous descriptor before deep analysis.
 
 ```json
 {
@@ -45,10 +46,17 @@ metadata and matching HTTP headers without sessions. Supported 2025 clients
 initialize without a session header, retain the server-issued session ID and
 send `notifications/initialized` before tool requests. Legacy notifications
 return 202 with no body; unknown/expired sessions require a fresh handshake.
-Streams are not resumable. A timeout or disconnect can leave import, indexing
-or patch work running; reconcile uncertain writes instead of blindly retrying.
+Streams are not resumable. A timeout or disconnect can leave import, indexing,
+Android conversion or patch work running; reconcile uncertain writes instead of blindly retrying.
 
 ## Source identity and addressing
+
+Choose the format-specific branch. JVM indexing, evidence, finders, decompilers
+and guarded patches operate on JAR projects. Android evidence operates on
+DEX/APK/AAB/multidex ZIP or manifests, without a JVM index. A conversion artifact
+does not replace the source project; use `import_android_artifact` and carry the
+new project/hash into its format's workflow. Never force conversion for a
+manifest-only question.
 
 - Preserve project and SHA-256 together. Project records call the hash
   `sha256`; index/summary use `archiveSha256`; finder, decompiler and patch
@@ -66,15 +74,21 @@ or patch work running; reconcile uncertain writes instead of blindly retrying.
   unchanged; verify again when adopting a different input or output project.
 - Copy class names/descriptors from `class_summary`. Bytecode responses use
   `descriptor`; decompile/patch use `methodDescriptor`. Requests consistently
-  use `methodDescriptor`.
+  use `methodDescriptor`; `android_method_bytecode` instead uses `descriptor`
+  and optional `dexFile`.
 - Name-only lookup is allowed only when unambiguous. Before method-specific
   claims or patch anchors, repeat with the exact descriptor. Bytecode tools
-  then report `methodMatchKind: DESCRIPTOR` and `exactMethodMatch: true`.
+  for JVM report `methodMatchKind: DESCRIPTOR` and `exactMethodMatch: true`.
+  Android evidence has no such flags; preserve its returned `descriptor` and
+  `dexFile` instead.
   Decompiler flags confirm parsed declaration signatures, not body equivalence;
   follow Vega's workflow for extraction failures and backend diagnostics.
 - Indexes are raw ASM instruction-list positions. Visible bytecode omits
-  label/line/frame nodes, so indexes have gaps. Use returned `index`,
-  `labelIndexes` and targets; never renumber a listing.
+  label/line/frame nodes, so indexes have gaps. These are JVM-only coordinates.
+  Android `index` is a DEX instruction index; `codeOffset`/`codeUnits` use
+  16-bit code units, and registers are not JVM stack slots. For JVM use returned
+  `index`, `labelIndexes` and targets; for DEX use returned instruction/branch
+  coordinates. Never renumber either listing.
 
 ## Evidence and coverage
 
@@ -121,6 +135,13 @@ tokens or journals. `asm-static` does not prove runtime linking, intended
 behavior or semantic equivalence.
 
 ## Result handoff
+
+Android artifact creation requires authorization for the requested conversion,
+assembly, checksum repair or header change; read-only analysis does not supply
+it. These operations use their own validation, not JVM patch previews. A derived
+artifact import stores a separate copy and project. Neither conversion nor
+offline verification authorizes target execution or establishes APK signing
+validity, runtime compatibility or semantic equivalence.
 
 Use structured JSON for delegated work; direct answers may use prose with the
 same relevant information. This example is a shape, not a server response:

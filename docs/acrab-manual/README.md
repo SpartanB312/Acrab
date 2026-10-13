@@ -1,7 +1,7 @@
 # Acrab 1.4 Manual
 
-Acrab analyzes JVM JAR archives over MCP and supports guarded method
-patching. It leaves the source archive unchanged. Its five specialist roles
+Acrab analyzes JVM JAR and Android inputs over MCP, supports trusted conversions
+and guarded JVM method patching. It leaves source bytes unchanged. Its six specialist roles
 organize analysis and review; they are client-side instructions, not separate
 servers or tool permissions.
 
@@ -14,9 +14,10 @@ servers or tool permissions.
 | Configure specialists, delegate and judge evidence coverage | [Specialist workflows](SPECIALIST-WORKFLOWS.md) |
 | Draft, preview, apply or recover a method patch | [Method patching](METHOD-PATCHING.md) |
 | Use operand, context, string recovery or comparison capabilities | [Static analysis capabilities](ANALYSIS-AND-VERIFICATION.md) |
+| Inspect DEX/APK/AAB/manifests or convert an authorized artifact | [Android analysis and conversion](ANDROID.md) |
 
 The distribution includes this entire manual, [the coordinating skill](../../skills/acrab/SKILL.md),
-five specialist skills, six workflow files, portable intelligence requirements,
+six specialist skills, seven workflow files, portable intelligence requirements,
 agent templates and
 [the generated tool catalog](../../catalog/tools-catalog.json). The catalog
 contains actual schemas from the bundled server. A repository checkout generates
@@ -26,9 +27,9 @@ Connect an MCP client directly to the server; no helper script is required.
 
 ## Capabilities and effects
 
-There are 34 registered endpoints: 32 domain tools and the platform endpoints
+There are 56 registered endpoints: 54 domain tools and the platform endpoints
 `health` and `list_tools`. The registry's `analysisTools` count includes
-import and patch tools; it does not mean all 32 have no state effects.
+import, patch and conversion tools; it does not mean all 54 have no state effects.
 
 | Activity | Source archive | Server-side effect |
 | --- | --- | --- |
@@ -39,6 +40,9 @@ import and patch tools; it does not mean all 32 have no state effects.
 | Patch draft | Unchanged | Validates operations without preparing output |
 | Patch preview | Unchanged | Cached prepared class bytes; idempotency bookkeeping may persist |
 | Patch apply | Unchanged | Publishes a new artifact/project; output indexing is a separate postcheck |
+| Android inspection | Unchanged | Verifies and parses input without JVM indexing |
+| Android artifact creation | Unchanged | Optional trusted process, working tree and separate output artifact |
+| Derived artifact import | Unchanged | Copies a project-owned artifact into a new project |
 
 All workflows are static: the server does not run target code, class
 initializers, decoders or bootstrap methods. Static string recovery models
@@ -64,6 +68,6 @@ The CLI stores projects under `data` relative to its working directory.
 Projects persist; most analysis caches and prepared preview bytes do not.
 There is no CLI workspace-selection environment variable.
 
-Android/DEX, a dashboard, REST compatibility, arbitrary bytecode transformations
+Android signing/deployment, a dashboard, REST compatibility, arbitrary bytecode transformations
 and target execution are outside the supported workflow. Archive counts do
 not model JVM dependency resolution or multi-release runtime selection.

@@ -94,8 +94,8 @@ Results include `resultType: complete` and server information in `_meta`.
 Modern GET and DELETE requests to `/mcp` return 405. Unknown modern RPC
 methods return 404 with JSON-RPC code `-32601`.
 
-`tools/list` is the MCP method listing all 34 endpoints. The similarly named
-`list_tools` is a callable platform tool that lists 32 domain definitions.
+`tools/list` is the MCP method listing all 56 endpoints. The similarly named
+`list_tools` is a callable platform tool that lists 54 domain definitions.
 Use `health` for version and endpoint counts.
 
 ### HTTP response streams
@@ -116,11 +116,17 @@ Modern stream closure signals cancellation; legacy clients can send
 session. A legacy disconnect alone is not a cancellation signal. Cancellation
 and timeouts attempt to interrupt only explicitly allowlisted observational
 tools. Libraries may not stop immediately.
-Import, indexing, draft, preview and apply are not interrupted and may complete
+Import, indexing, draft, preview, apply and Android artifact creation are not interrupted and may complete
 after their response stream closes. Never infer that a write did not happen
 from a timeout or disconnect. Shutdown waits for active workers to finish.
 
 ## Import and identify an archive
+
+The examples below follow a JAR workflow. DEX/APK/AAB, multidex ZIP and manifest
+XML use the same `create_project` envelope with their original format extension.
+After identity verification, select Canopus's Android tools instead of JVM
+indexing. See the [Android guide](ANDROID.md) for bounded evidence, trusted
+converter settings and `import_android_artifact` handoffs over the same MCP connection.
 
 These tool-call examples use the legacy envelope and placeholders; replace
 them with your archive bytes and returned IDs. Per-request clients also add

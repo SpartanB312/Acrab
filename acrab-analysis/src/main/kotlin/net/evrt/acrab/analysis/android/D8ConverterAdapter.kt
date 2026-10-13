@@ -71,8 +71,12 @@ internal class D8ConverterAdapter(
 
     suspend fun convert(project: ProjectRecord, executable: String, output: Path): D8ConversionOutput {
         require(project.inputType in setOf("jar", "war", "ear")) { "jar2dex expects a JVM archive." }
-        val arguments = arguments(executable, Path.of(project.archivePath), output)
-        val inputClasses = inputClassNames(Path.of(project.archivePath))
+        val source = Path.of(project.archivePath)
+        val inputClasses = inputClassNames(source)
+        // External converters receive a disposable input, never the imported source archive.
+        val staged = output.resolve("input.jar")
+        Files.copy(source, staged)
+        val arguments = arguments(executable, staged, output)
         val versionProbe = invoke(executable, listOf("--version"), output)
         val version = Regex("(?i)\\b$executable\\s+(?:version\\s+)?([a-z0-9._-]+)")
             .find(versionProbe.stdout)?.groupValues?.get(1)

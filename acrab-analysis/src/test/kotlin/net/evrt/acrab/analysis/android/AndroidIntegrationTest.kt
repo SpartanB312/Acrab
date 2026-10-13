@@ -208,6 +208,63 @@ class AndroidIntegrationTest {
         assertFailsWith<IllegalArgumentException> { D8ConversionOptions.fromEnvironment(mapOf("ACRAB_ANDROID_MIN_API" to "0")) }
     }
 
+    @Test
+    fun `checksum repair supports stored APK entries and preserves other resources`() = workspace { context, projects ->
+        val damaged = dex().also { it[8] = (it[8].toInt() xor 1).toByte() }
+        val output = ByteArrayOutputStream()
+        ZipOutputStream(output).use { zip ->
+            val entry = ZipEntry("classes.dex").apply {
+                method = ZipEntry.STORED; size = damaged.size.toLong(); compressedSize = size
+                crc = java.util.zip.CRC32().also { it.update(damaged) }.value
+            }
+            zip.putNextEntry(entry); zip.write(damaged); zip.closeEntry()
+            zip.putNextEntry(ZipEntry("assets/message.txt")); zip.write("unchanged".toByteArray()); zip.closeEntry()
+        }
+        val source = projects.createFromBytes("stored.apk", output.toByteArray())
+        val repaired = call(context, "android_dex_recompute_checksum", "projectId" to source.projectId)
+        val path = Path.of(repaired["outputArtifactPath"]!!.jsonPrimitive.content)
+        java.util.zip.ZipFile(path.toFile()).use { zip ->
+            assertEquals(ZipEntry.STORED, zip.getEntry("classes.dex").method)
+            assertContentEquals(dex(), zip.getInputStream(zip.getEntry("classes.dex")).readBytes())
+            assertEquals("unchanged", zip.getInputStream(zip.getEntry("assets/message.txt")).readBytes().toString(Charsets.UTF_8))
+        }
+        assertTrue(projects.verifyIdentity(source.projectId).matches)
+    }
+
+    @Test
+    fun `checksum repair rejects an archive without DEX rather than claiming success`() = workspace { context, projects ->
+        val source = projects.createFromBytes("manifest.apk", zip("AndroidManifest.xml" to "<manifest/>".toByteArray()))
+        assertFailsWith<ToolInputException> { call(context, "android_dex_recompute_checksum", "projectId" to source.projectId) }
+        assertEquals(1, projects.list().size)
+    }
+
+    @Test
+    fun `D8 adapter isolates the source and validates the derived DEX before handoff`() = workspace { _, projects ->
+        val writer = ClassWriter(0)
+        writer.visit(AsmOpcodes.V21, AsmOpcodes.ACC_PUBLIC, "example/Android", null, "java/lang/Object", null)
+        writer.visitEnd()
+        val bytes = zip("example/Android.class" to writer.toByteArray())
+        val source = projects.createFromBytes("sample.jar", bytes)
+        val work = Files.createDirectory(projects.workspaceRoot.resolve("converter-test"))
+        val adapter = D8ConverterAdapter(D8ConversionOptions()) { tool, arguments, _ ->
+            if (arguments == listOf("--version")) {
+                AndroidToolCommandOutput(true, tool, arguments, "d8 8.0", "", 0, 1, false)
+            } else {
+                val staged = Path.of(arguments.last())
+                assertNotEquals(Path.of(source.archivePath), staged)
+                assertContentEquals(bytes, Files.readAllBytes(staged))
+                Files.write(staged, byteArrayOf(1, 2, 3))
+                Files.write(work.resolve("classes.dex"), dex())
+                AndroidToolCommandOutput(true, tool, arguments, "", "", 0, 1, false)
+            }
+        }
+        val result = runBlocking { adapter.convert(source, "d8", work) }
+        assertEquals("dex", result.format)
+        assertEquals(1, result.classCount)
+        assertContentEquals(bytes, Files.readAllBytes(Path.of(source.archivePath)))
+        assertContentEquals(dex(), result.bytes)
+    }
+
     private fun workspace(action: (AcrabContext, ProjectRepository) -> Unit) {
         val root = Files.createTempDirectory("acrab-android-test-")
         try {

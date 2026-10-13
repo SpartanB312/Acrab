@@ -21,6 +21,7 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 import java.util.zip.Adler32
+import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
@@ -433,18 +434,31 @@ internal class AndroidToolsService(
 
     private fun rewriteDexEntries(bytes: ByteArray): ByteArray {
         val output = ByteArrayOutputStream()
+        var entryCount = 0
+        var totalBytes = 0L
+        var dexCount = 0
         ZipInputStream(bytes.inputStream()).use { input -> ZipOutputStream(output).use { zip ->
             while (true) {
                 val entry = input.nextEntry ?: break
-                val data = readBoundedEntry(input, entryName = entry.name); val copy = ZipEntry(entry.name).apply { method = entry.method; time = entry.time; comment = entry.comment }
+                require(++entryCount <= DexArchiveReader.MAX_ENTRY_COUNT) { "Archive entry count exceeds the parser budget." }
+                val data = readBoundedEntry(input, entryName = entry.name)
+                totalBytes += data.size
+                require(totalBytes <= DexArchiveReader.MAX_TOTAL_UNCOMPRESSED_BYTES) { "Archive expanded bytes exceed the parser budget." }
                 val baseName = entry.name.substringAfterLast('/')
-                val dexEntry = baseName == "classes.dex" || (baseName.startsWith("classes") && baseName.endsWith(".dex") && baseName.removePrefix("classes").removeSuffix(".dex").all(Char::isDigit))
-                if (dexEntry) {
-                    zip.putNextEntry(copy); zip.write(recomputeDex(data)); zip.closeEntry(); continue
+                val dexEntry = baseName.matches(Regex("classes(\\d*)\\.dex"))
+                val rewritten = if (dexEntry) { dexCount++; recomputeDex(data) } else data
+                val copy = ZipEntry(entry.name).apply {
+                    method = entry.method; time = entry.time; comment = entry.comment
+                    if (method == ZipEntry.STORED) {
+                        size = rewritten.size.toLong()
+                        compressedSize = size
+                        crc = CRC32().also { it.update(rewritten) }.value
+                    }
                 }
-                zip.putNextEntry(copy); zip.write(if (entry.name.matches(Regex("classes(\\d*)\\.dex"))) recomputeDex(data) else data); zip.closeEntry()
+                zip.putNextEntry(copy); zip.write(rewritten); zip.closeEntry()
             }
         } }
+        require(dexCount > 0) { "No classes*.dex entry was found; no checksum artifact was created." }
         return output.toByteArray()
     }
 
@@ -459,8 +473,12 @@ internal class AndroidToolsService(
     private fun shortId(): String = UUID.randomUUID().toString().replace("-", "").take(10)
     private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
     private fun projectRoot(project: ProjectRecord): Path = projects.projectRoot(project.projectId)
-    private fun workDirectory(project: ProjectRecord, name: String): Path = projectRoot(project).resolve("logs").resolve("android-$name-${shortId()}").also { Files.createDirectories(it) }
-    private fun outputPath(project: ProjectRecord, suffix: String): String = projectRoot(project).resolve("artifacts").resolve("android-$suffix-${shortId()}").toString()
+    private fun workDirectory(project: ProjectRecord, name: String): Path {
+        val logs = projectRoot(project).resolve("logs")
+        try { Files.createDirectory(logs) } catch (_: java.nio.file.FileAlreadyExistsException) { }
+        require(Files.isDirectory(logs, LinkOption.NOFOLLOW_LINKS)) { "Converter logs must not traverse symbolic links." }
+        return Files.createDirectory(logs.resolve("android-$name-${shortId()}"))
+    }
     private fun commandUnavailable(executable: String, args: List<String>, message: String) = AndroidToolCommandOutput(false, executable, args, "", message, null, 0, false)
 
     private fun validationFailure(executable: String, message: String) = AndroidToolCommandOutput(false, executable, emptyList(), "", message, null, 0, false)

@@ -35,10 +35,15 @@ Confirm the requested source/output and existing authorization before creating
 an artifact. Reuse `android_dex2jar_status` or `android_dex_tools_catalog` when
 current. A catalog entry does not establish executable availability or success.
 
-Tools resolve only from `ACRAB_ANDROID_TOOL_ROOT` or the explicitly configured
-`ACRAB_ANDROID_PATH_ROOT`, never arbitrary PATH. Allowlisted logical names are
+Installed distributions resolve fixed Java toolchains from their own
+`tools/android/` directory by default; no installation or runtime download is
+needed. Each uses the current JDK and a checksum-verified isolated classpath,
+without shell wrappers. Explicit `ACRAB_ANDROID_TOOL_ROOT` or
+`ACRAB_ANDROID_PATH_ROOT` overrides disable bundled fallback, never use arbitrary
+PATH, and may require separate installation. Allowlisted logical names are
 d2j-dex2jar, dex2jar, baksmali, smali, d8, dx, jasmin and r8; not every name has
-an exposed successful workflow. Do not download or run archive-selected tools.
+an exposed successful workflow. Legacy dx and direct r8 are not bundled entries.
+Do not download or run archive-selected tools.
 Preserve D8 min API, libraries/classpath and version settings; see the
 [Android guide](../../../docs/acrab-manual/ANDROID.md#configuration).
 

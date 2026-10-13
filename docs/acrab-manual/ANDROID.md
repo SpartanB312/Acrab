@@ -41,19 +41,46 @@ returned and reviewed coverage separate.
 ## Configuration
 
 Static parsing, ASM checks, checksum repair and header rewriting are built in.
-Converters are optional trusted installations, not bundled executables.
+Distributions also include fixed Java converters and all their executable
+classpath dependencies under `tools/android/`. The server discovers this
+directory relative to its own installed JAR, independent of its working directory:
+
+| Bundled tool | Version |
+| --- | --- |
+| dex2jar | 2.4.38 |
+| smali / baksmali | 3.0.10 |
+| D8 / R8 | 9.5.23 |
+| Sable Jasmin | 3.0.3 |
+
+No external converter installation, PATH wrapper or startup download is needed.
+Each runs through the current JDK in a separate JVM with an allowlisted main
+class and isolated classpath. SHA-256 verifies the complete manifest classpaths
+at discovery and rechecks the selected classpath before execution. Sources and
+license materials are outside executable classpaths. SDK platform and
+application libraries are not bundled; supply those when an input needs them.
+
+The environment settings below are optional overrides. Specifying either
+external root disables automatic bundled fallback; a missing overridden tool
+remains unavailable instead of silently using a different version. IDE/class
+directory execution has no installed bundle to discover, so configure a trusted
+root there or run the installed distribution.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `ACRAB_ANDROID_TOOL_ROOT` | unset | Trusted converter entry-point directory |
-| `ACRAB_ANDROID_PATH_ROOT` | unset | Explicit second trusted directory, not arbitrary PATH |
+| `ACRAB_ANDROID_TOOL_ROOT` | unset | Override with a trusted external converter entry-point directory |
+| `ACRAB_ANDROID_PATH_ROOT` | unset | Optional second external root, not arbitrary PATH |
 | `ACRAB_ANDROID_MIN_API` | `21` | Positive D8 minimum API |
 | `ACRAB_ANDROID_LIBRARIES` | empty | D8 library files, platform path-separated |
 | `ACRAB_ANDROID_CLASSPATH` | empty | D8 classpath files, platform path-separated |
 | `ACRAB_ANDROID_D8_VERSION` | unset | Optional expected D8 version |
 
-Inspect `android_dex2jar_status` and `android_dex_tools_catalog`. Allowlisted
-logical names do not imply an available/supported conversion. Executable
+Inspect `android_dex2jar_status` and `android_dex_tools_catalog`; installed defaults
+report `available: true` and historical field `version: "bundled-java"`. That
+field describes discovery mode, not a compiler's semantic version; use the
+manifest or a conversion's `toolVersion` for actual versions.
+Allowlisted logical names do not imply an
+available/supported conversion: legacy dx and direct r8 workflows are not
+bundled entries. For external overrides, executable
 symlinks must remain inside the trusted root. Control characters are rejected;
 Windows batch paths/arguments also reject shell metacharacters. Commands have
 a 120-second default timeout and two-process concurrency bound. stdout/stderr
@@ -103,6 +130,13 @@ header rewriting can invalidate APK/JAR signatures. Signing, deployment and targ
 outside this workflow.
 
 ## Source Licenses
+
+Converter licenses, copyright notices, pinned source references and Jasmin/CUP
+source archives are packaged under `tools/android/licenses/`; see its
+[source and license record](../../tools/android/licenses/SOURCES.md) in the
+distribution. The corresponding source document in a checkout is
+`licenses/android-tools/SOURCES.md`. These tools and their dependencies retain
+their own licenses, including GPL-2.0 for Jasmin; they are not relabelled MIT.
 
 Vendored AAPT2 schemas retain AOSP Apache-2.0 headers and pinned-source metadata.
 The distribution includes the [license](../../licenses/AOSP-Apache-2.0.txt) and

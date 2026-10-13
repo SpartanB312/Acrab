@@ -128,6 +128,11 @@ After identity verification, select Canopus's Android tools instead of JVM
 indexing. See the [Android guide](ANDROID.md) for bounded evidence, trusted
 converter settings and `import_android_artifact` handoffs over the same MCP connection.
 
+The installed distribution discovers bundled Java converters automatically.
+Leave `ACRAB_ANDROID_TOOL_ROOT` / `ACRAB_ANDROID_PATH_ROOT` unset to use them;
+those variables are external overrides, not required setup. D8 platform and
+application dependencies remain input-specific. No converter is downloaded at runtime.
+
 These tool-call examples use the legacy envelope and placeholders; replace
 them with your archive bytes and returned IDs. Per-request clients also add
 the metadata and HTTP headers described above. A file path alone is not an

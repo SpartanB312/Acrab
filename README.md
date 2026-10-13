@@ -29,7 +29,7 @@ checks pass.
   archive checksums, method fingerprints, debug metadata, and a single-use
   preview.
 - **Android evidence:** ports Antares 1.3.5 DEX/APK/AAB and manifest analysis,
-  plus optional trusted dex2jar, smali/baksmali, D8/dx and Jasmin workflows.
+  plus bundled dex2jar, smali/baksmali, D8 and classic Jasmin workflows.
 - **Agent-ready:** ships a main-agent skill, six specialist roles, task-focused
   workflows, role-specific intelligence requirements and model routing guidance
   for authorized delegation.
@@ -233,7 +233,8 @@ role. The requirements describe task demands, not measured model scores.
   Reconcile an uncertain write outcome before retrying.
 - Preview IDs bind source identity, canonical request, engine version, and
   prepared class bytes, and can be consumed only once.
-- Android conversions run only explicitly configured trusted tools. A
+- Android conversions use bundled, checksum-verified Java tools by default,
+  or explicitly configured trusted external tools. A
   successful command is not sufficient: output validation and entry coverage
   matter. Conversion creates an artifact, not an in-place rewrite or automatic
   new project. Read-only analysis does not authorize conversion or execution.
@@ -259,8 +260,11 @@ heap and expected archive sizes.
 
 Android conversion settings use `ACRAB_ANDROID_*`; see the
 [Android guide](docs/acrab-manual/ANDROID.md#configuration). No converter is
-required for static DEX or manifest analysis, and no converter executable is
-bundled. Derived artifacts can enter a new project through the same MCP connection.
+required for static DEX or manifest analysis. Distributions bundle dex2jar
+2.4.38, smali/baksmali 3.0.10, D8/R8 9.5.23 and Jasmin 3.0.3 with their Java
+dependencies; no separate converter installation or runtime download is needed.
+Platform and application libraries for D8 remain input-specific. Derived
+artifacts can enter a new project through the same MCP connection.
 
 ## Scope
 
@@ -274,7 +278,7 @@ Supported:
 - Guarded schema v2 method patching
 - stdio and Streamable HTTP MCP transports with request-scoped SSE
 - Static DEX/APK/AAB/multidex and XML/AXML/protobuf manifest inspection
-- Optional trusted Android conversion/assembly and derived-project handoffs
+- Bundled Android conversion/assembly and derived-project handoffs
 
 Not supported:
 
@@ -327,9 +331,19 @@ Distribution archives are written to
 **1.4**. ZIP/TAR packages include the manual, skills, model routing references,
 agent templates, generated catalog and license.
 
+Bundled converters are isolated under `tools/android/`, with exact classpaths,
+SHA-256 metadata, upstream notices and applicable source archives. Run real
+converter verification before release packaging:
+
+```powershell
+.\gradlew.bat :acrab-analysis:verifyBundledAndroidTools
+```
+
 ## License
 
 Project code is released under the [MIT License](LICENSE). Vendored AAPT2
 schemas and their generated code retain the
 [AOSP Apache-2.0 license](licenses/AOSP-Apache-2.0.txt) and
 [notice](licenses/AOSP-NOTICE.txt).
+Bundled third-party converters retain their separate licenses, including
+Jasmin's GPL-2.0; see [tool source and license information](licenses/android-tools/SOURCES.md).

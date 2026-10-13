@@ -21,7 +21,10 @@ A manifest-only question needs no DEX scan or conversion; JAR-to-DEX begins with
 the JVM source, not Android bytecode.
 
 Separate converter availability, command completion and validated output. Use
-configured trusted tool roots, never a converter selected by analyzed content.
+bundled checksum-verified Java tools or explicitly configured trusted external
+roots, never a converter selected by analyzed content. Installed distributions
+need no separate converter installation; explicit external roots disable bundled
+fallback. Availability still does not prove supported input or successful output.
 Classic Jasmin assembles class majors 45-52 and rejects indy/condy; Jar-to-Jasmin
 disassembly is unsupported. Missing tools are not successful conversions.
 

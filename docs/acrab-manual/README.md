@@ -44,6 +44,12 @@ import, patch and conversion tools; it does not mean all 54 have no state effect
 | Android artifact creation | Unchanged | Optional trusted process, working tree and separate output artifact |
 | Derived artifact import | Unchanged | Copies a project-owned artifact into a new project |
 
+The distribution includes pinned dex2jar, smali/baksmali, D8/R8 and classic
+Jasmin Java toolchains under `tools/android/`, with verified isolated classpaths
+and licenses. They are discovered without extra installation or runtime
+downloads; external trusted roots remain optional overrides. D8 SDK/platform
+and application dependencies are input-specific, not promised by the bundle.
+
 All workflows are static: the server does not run target code, class
 initializers, decoders or bootstrap methods. Static string recovery models
 supported operations as data. Finder results are advisory

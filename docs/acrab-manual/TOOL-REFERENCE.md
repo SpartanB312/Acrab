@@ -267,10 +267,16 @@ for formats, configuration, actual output status fields and authorization.
 | `import_android_artifact` | Required `artifactPath`; optional `expectedSha256` | Project-owned derived artifact copied into a new project record |
 
 `android_dex2jar_status` and `android_dex_tools_catalog` take **no arguments or
-project**. They inspect trusted-root availability and capability contracts, not
+project**. They inspect bundled/external availability and capability contracts, not
 successful conversion. The Android surface contains 21 ported tools and one
 Acrab-specific artifact-import tool. Search arrays have no cursor/total; a
 full-sized result may be capped. Inspect actual schemas before calling.
+
+Installed defaults include dex2jar 2.4.38, smali/baksmali 3.0.10, D8/R8 9.5.23
+and classic Jasmin 3.0.3. They run using the current JDK with allowlisted main
+classes and checksum-verified isolated classpaths, without downloads or helper
+scripts. Optional external roots disable bundled fallback. Jar-to-Jasmin remains
+unsupported even though the assembler is bundled.
 
 ## Platform
 

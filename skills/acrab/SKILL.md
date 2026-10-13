@@ -89,7 +89,8 @@ publishes a new archive and project. Do not describe every tool as having no
 filesystem effects.
 
 Android conversions, assembly, checksum repair and class-version changes create
-separate artifacts and may run configured trusted converters. They need
+separate artifacts and run bundled verified Java converters or explicit trusted
+external overrides. Installed distributions need no converter setup. They need
 authorization for the requested output, not JVM patch preview tokens.
 `import_android_artifact` creates a new project from a project-owned artifact.
 Read-only inspection does not authorize conversion or execution.

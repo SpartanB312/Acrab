@@ -17,6 +17,7 @@ import net.evrt.acrab.analysis.index.JvmIndexService
 import net.evrt.acrab.analysis.index.ProjectRepository
 import net.evrt.acrab.analysis.index.ProjectRecord
 import net.evrt.acrab.analysis.index.StringReference
+import net.evrt.acrab.analysis.android.registerAndroidTools
 import net.evrt.acrab.analysis.evidence.BytecodeEvidenceService
 import net.evrt.acrab.analysis.evidence.ConstantPropagationResult
 import net.evrt.acrab.analysis.evidence.MethodBytecodeResult
@@ -67,6 +68,7 @@ fun registerAcrabTools(context: AcrabContext) {
     registerEvidenceTools(context, projects, indexes)
     registerFinderTools(context, indexes)
     registerAnalysisExtensionTools(context, projects, indexes)
+    registerAndroidTools(context, projects)
     registerBaseTools(context)
 }
 
@@ -110,7 +112,7 @@ private fun registerProjectTools(context: AcrabContext, projects: ProjectReposit
     context.tools.register(
         ToolDefinition(
             "create_project",
-            "Import a JAR archive into the Acrab workspace and create a project.",
+            "Import JAR, DEX, APK, AAB or manifest XML bytes into the Acrab workspace and create a project.",
             schema(
                 required = listOf("fileName", "archiveBase64"),
                 properties = mapOf(

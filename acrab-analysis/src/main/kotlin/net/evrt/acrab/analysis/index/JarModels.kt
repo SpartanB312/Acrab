@@ -9,7 +9,9 @@ data class ProjectRecord(
     val archivePath: String,
     val sha256: String,
     val createdAt: Long,
-)
+) {
+    val inputType: String get() = fileName.substringAfterLast('.', "jar").lowercase()
+}
 
 @Serializable
 data class JarSummary(

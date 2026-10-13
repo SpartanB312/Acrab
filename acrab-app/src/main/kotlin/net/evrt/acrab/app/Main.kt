@@ -65,4 +65,8 @@ private val INTERRUPTIBLE_TOOLS = setOf(
     "recover_strings", "compare_structure", "find_number_secrets", "find_string_transforms",
     "find_opaque_predicates", "find_control_flow_flattening", "find_invokedynamic_dispatch",
     "evidence_summary", "finder_catalog", "patch_catalog",
+    "android_dex_summary", "android_list_classes", "android_class_summary", "android_search_strings",
+    "android_search_invocations", "android_method_bytecode", "android_find_sensitive_apis",
+    "android_manifest_summary", "android_manifest_raw", "android_manifest_findings",
+    "android_dex2jar_status", "android_dex_tools_catalog", "android_asm_verify",
 )

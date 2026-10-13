@@ -6,6 +6,8 @@ cfr = "0.152"
 coroutines = "1.11.0"
 ktor = "3.5.0"
 vineflower = "1.12.0"
+smali = "3.0.10"
+protobufJava = "4.33.2"
 
 [libraries]
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
@@ -20,6 +22,8 @@ asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
 asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
 cfr = { module = "org.benf:cfr", version.ref = "cfr" }
 vineflower = { module = "org.vineflower:vineflower", version.ref = "vineflower" }
+smali-dexlib2 = { module = "com.android.tools.smali:smali-dexlib2", version.ref = "smali" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobufJava" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 [bundles]

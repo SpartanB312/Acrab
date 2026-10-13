@@ -16,11 +16,11 @@ import kotlin.test.assertTrue
 
 class AcrabToolsIntegrationTest {
     @Test
-    fun `registers thirty-two domain tools and two platform tools`() {
+    fun `registers fifty-four domain tools and two platform tools`() {
         AcrabContext(AcrabConfig(workspacePath = tempWorkspace())).use { context ->
             registerAcrabTools(context)
-            assertEquals(32, context.tools.analysisDefinitions().size)
-            assertEquals(34, context.tools.definitions().size)
+            assertEquals(54, context.tools.analysisDefinitions().size)
+            assertEquals(56, context.tools.definitions().size)
         }
     }
 
@@ -162,7 +162,7 @@ class AcrabToolsIntegrationTest {
             assertTrue(
                 call(context, "evidence_summary", """{"projectId":"$projectId"}""").contains("categorySummary"),
             )
-            assertEquals(32, Json.parseToJsonElement(call(context, "list_tools", "{}")).jsonArray.size)
+            assertEquals(54, Json.parseToJsonElement(call(context, "list_tools", "{}")).jsonArray.size)
         }
     }
 

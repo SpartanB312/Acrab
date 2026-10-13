@@ -13,6 +13,7 @@ class JvmIndexService(
             cache.remove(projectId)
             throw failure
         }
+        require(project.inputType == "jar") { "JVM indexing expects a JAR project; convert Android bytecode and import the derived JAR first." }
         cache[projectId]?.let { return it }
         val index = indexer.index(project.projectId, java.nio.file.Path.of(project.archivePath), project.sha256)
         cache[projectId] = index
